@@ -1,0 +1,24 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/", "destination": "/questionario-clinica.html" },
+    { "source": "/clinica", "destination": "/questionario-clinica.html" },
+    { "source": "/rua", "destination": "/questionario-rua.html" },
+    { "source": "/painel", "destination": "/painel.html" }
+  ],
+  "headers": [
+    {
+      "source": "/painel.html",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+        { "key": "Referrer-Policy", "value": "no-referrer" }
+      ]
+    },
+    {
+      "source": "/(questionario-.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+      ]
+    }
+  ]
+}
