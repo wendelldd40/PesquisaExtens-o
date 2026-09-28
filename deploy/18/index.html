@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0f6b78">
+<meta name="robots" content="noindex">
+<title>Pesquisa com tutores — parceria clínica</title>
+<style>
+:root{
+  --g1:#1f7f8c; --g2:#17a3a0; --g3:#46c4a8;
+  --acento:#0f7d84;
+  --acento-escuro:#0a5b63;
+  --tinta:#0b2f33;
+  --tinta-suave:#5d8288;
+  --campo:rgba(255,255,255,.9);
+  --borda:#c2dcdd;
+  --erro:#d64545;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:var(--g1);color:var(--tinta);overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+#fundo{
+  position:fixed;inset:0;z-index:0;
+  background:linear-gradient(160deg,var(--g1) 0%,var(--g2) 48%,var(--g3) 100%);
+  background-size:180% 180%;animation:respira 18s ease-in-out infinite;
+}
+@keyframes respira{0%,100%{background-position:0% 30%}50%{background-position:100% 70%}}
+#fundo::after{
+  content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(60% 40% at 15% 8%,rgba(255,255,255,.28),transparent 70%),
+    radial-gradient(50% 35% at 90% 95%,rgba(255,255,255,.18),transparent 70%);
+}
+@media (prefers-reduced-motion:reduce){#fundo{animation:none}}
+
+.app{
+  position:relative;z-index:1;height:100dvh;height:100vh;
+  display:flex;flex-direction:column;
+  padding:calc(env(safe-area-inset-top) + 14px) 16px calc(env(safe-area-inset-bottom) + 14px);
+  max-width:540px;margin:0 auto;
+}
+
+/* ---------- topo ---------- */
+.topo{display:flex;align-items:center;gap:12px;min-height:34px;flex-shrink:0}
+.voltar{
+  width:34px;height:34px;border:0;border-radius:50%;
+  background:rgba(255,255,255,.22);color:#fff;
+  display:none;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
+  transition:background .2s,transform .15s;
+}
+.voltar:active{transform:scale(.92)}
+.voltar.on{display:flex}
+.trilho{flex:1;height:4px;background:rgba(255,255,255,.28);border-radius:99px;overflow:hidden;opacity:0;transition:opacity .3s}
+.trilho.on{opacity:1}
+.barra{height:100%;width:0%;background:#fff;border-radius:99px;transition:width .45s cubic-bezier(.4,0,.2,1)}
+.passo{font-size:12px;font-weight:600;color:rgba(255,255,255,.85);letter-spacing:.03em;opacity:0;transition:opacity .3s;flex-shrink:0}
+.passo.on{opacity:1}
+
+/* ---------- palco ---------- */
+.palco{flex:1;display:flex;flex-direction:column;position:relative;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:10px 0;scrollbar-width:none}
+.palco::-webkit-scrollbar{display:none}
+.tela{display:none;flex-direction:column;margin:auto 0;animation:entra .42s cubic-bezier(.16,1,.3,1)}
+.tela.ativa{display:flex}
+@keyframes entra{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+@keyframes entraSuave{from{opacity:0}to{opacity:1}}
+
+.selo{
+  align-self:flex-start;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(255,255,255,.9);background:rgba(255,255,255,.18);
+  padding:7px 13px;border-radius:99px;margin-bottom:18px;border:1px solid rgba(255,255,255,.25);
+}
+.selo.mini{margin-bottom:12px;letter-spacing:.1em;padding:6px 11px;font-size:10.5px}
+h1{font-size:clamp(28px,8.2vw,38px);line-height:1.12;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:14px}
+h2{font-size:clamp(21px,5.6vw,26px);line-height:1.25;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:8px}
+h2.curta{font-size:clamp(24px,6.8vw,31px);line-height:1.2}
+.apoio{font-size:16px;line-height:1.55;color:rgba(255,255,255,.88)}
+.apoio.menor{font-size:14px;line-height:1.5}
+
+/* ---------- campos ---------- */
+.campo-area{margin-top:24px}
+.campo{
+  width:100%;border:2px solid transparent;outline:0;background:var(--campo);border-radius:16px;
+  padding:18px;font-size:17px;font-family:inherit;color:var(--tinta);font-weight:500;
+  transition:border-color .2s,background .2s,box-shadow .2s;
+}
+.campo.area{min-height:128px;resize:none;line-height:1.5;font-weight:400;font-size:16px}
+.campo::placeholder{color:var(--tinta-suave);font-weight:400}
+.campo:focus{border-color:#fff;background:#fff;box-shadow:0 8px 26px rgba(0,0,0,.14)}
+.campo.ruim{border-color:var(--erro)}
+.dica-campo{font-size:13px;color:rgba(255,255,255,.8);margin-top:10px;line-height:1.45;padding-left:2px}
+.aviso{
+  font-size:13.5px;color:#fff;margin-top:12px;font-weight:600;
+  display:none;align-items:center;gap:7px;
+  background:rgba(214,69,69,.92);padding:10px 13px;border-radius:12px;animation:entraSuave .25s;
+}
+.aviso.on{display:flex}
+
+/* ---------- alternativas ---------- */
+.opcoes{display:flex;flex-direction:column;gap:10px;margin-top:22px}
+.opcao{
+  width:100%;text-align:left;cursor:pointer;background:var(--campo);
+  border:2px solid transparent;border-radius:16px;padding:15px 16px;
+  display:flex;align-items:center;gap:13px;font-family:inherit;
+  transition:transform .16s,border-color .2s,background .2s,box-shadow .2s;
+}
+.opcao:active{transform:scale(.985)}
+.opcao.sel{border-color:#fff;background:#fff;box-shadow:0 10px 28px rgba(0,0,0,.16)}
+.marca{
+  width:23px;height:23px;border-radius:50%;border:2px solid var(--borda);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;transition:all .2s;
+}
+.opcao.sel .marca{border-color:var(--acento);background:var(--acento)}
+.marca svg{opacity:0;transform:scale(.5);transition:all .2s}
+.opcao.sel .marca svg{opacity:1;transform:none}
+.opcao-txt{display:flex;flex-direction:column;gap:3px;min-width:0}
+.opcao-tit{font-size:15px;font-weight:600;color:var(--tinta);line-height:1.35}
+.opcao.destaque .opcao-tit{font-size:16.5px;font-weight:700}
+.opcao-sub{font-size:13.5px;color:var(--tinta-suave);line-height:1.4}
+
+/* ---------- consentimento ---------- */
+.termo{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:16px;padding:16px;margin-top:20px}
+.termo p{font-size:13.5px;line-height:1.6;color:rgba(255,255,255,.92)}
+.aceite{
+  display:flex;align-items:flex-start;gap:12px;margin-top:12px;cursor:pointer;
+  background:var(--campo);border:2px solid transparent;border-radius:16px;padding:16px;
+  transition:border-color .2s,background .2s;
+}
+.aceite.sel{border-color:#fff;background:#fff}
+.caixa{
+  width:23px;height:23px;border-radius:7px;border:2px solid var(--borda);flex-shrink:0;margin-top:1px;
+  display:flex;align-items:center;justify-content:center;transition:all .2s;
+}
+.aceite.sel .caixa{border-color:var(--acento);background:var(--acento)}
+.caixa svg{opacity:0;transform:scale(.5);transition:all .2s}
+.aceite.sel .caixa svg{opacity:1;transform:none}
+.aceite span{font-size:14.5px;line-height:1.45;color:var(--tinta);font-weight:600}
+
+/* ---------- rodape ---------- */
+.rodape{flex-shrink:0;padding-top:12px}
+.btn{
+  width:100%;border:0;border-radius:16px;padding:18px;cursor:pointer;font-family:inherit;
+  font-size:17px;font-weight:700;letter-spacing:-.01em;background:#fff;color:var(--acento-escuro);
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  box-shadow:0 10px 30px rgba(0,0,0,.18);transition:transform .16s,opacity .2s;
+}
+.btn:active{transform:scale(.985)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.fantasma{background:rgba(255,255,255,.16);color:#fff;box-shadow:none;border:1px solid rgba(255,255,255,.3);margin-top:10px;font-size:15px;padding:15px}
+[hidden]{display:none !important}
+.rodape-nota{text-align:center;font-size:12px;color:rgba(255,255,255,.72);margin-top:12px;line-height:1.45}
+.girando{width:19px;height:19px;border:2.5px solid rgba(0,0,0,.18);border-top-color:var(--acento-escuro);border-radius:50%;animation:gira .7s linear infinite}
+@keyframes gira{to{transform:rotate(360deg)}}
+
+/* ---------- final e gabarito ---------- */
+.selo-ok{
+  width:74px;height:74px;border-radius:50%;background:rgba(255,255,255,.2);
+  border:2px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;
+  margin-bottom:22px;animation:pulsa .6s cubic-bezier(.16,1,.3,1);
+}
+@keyframes pulsa{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+.cartao-info{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:16px;padding:16px;margin-top:20px}
+.cartao-info p{font-size:14px;line-height:1.6;color:rgba(255,255,255,.92)}
+.gabarito{margin-top:18px;display:flex;flex-direction:column;gap:12px}
+.item-gab{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.2);border-radius:16px;padding:15px;animation:entraSuave .35s}
+.item-gab .tema{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:7px;display:flex;align-items:center;gap:7px}
+.pastilha{width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.pastilha.certo{background:rgba(255,255,255,.95)}
+.pastilha.errado{background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.45)}
+.item-gab .resposta{font-size:14.5px;font-weight:700;color:#fff;line-height:1.4;margin-bottom:6px}
+.item-gab .porque{font-size:13.5px;line-height:1.6;color:rgba(255,255,255,.9)}
+
+@media (max-height:680px){
+  h1{font-size:26px}h2{font-size:20px}h2.curta{font-size:23px}
+  .campo-area,.opcoes{margin-top:16px}
+  .selo{margin-bottom:12px}
+  .campo{padding:15px}.opcao{padding:13px 14px}
+  .btn{padding:16px}
+}
+</style>
+</head>
+<body>
+<div id="fundo"></div>
+
+<div class="app">
+
+  <header class="topo">
+    <button class="voltar" id="btnVoltar" type="button" aria-label="Voltar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div class="trilho" id="trilho"><div class="barra" id="barra"></div></div>
+    <div class="passo" id="passo"></div>
+  </header>
+
+  <main class="palco" id="palco">
+
+    <!-- abertura -->
+    <section class="tela ativa" id="telaInicio">
+      <div class="selo">Pesquisa de extensão universitária</div>
+      <h1>Enquanto você espera, participa da pesquisa?</h1>
+      <p class="apoio">Estudantes de Medicina Veterinária estão mapeando como os tutores alimentam seus animais. São cinco perguntas rápidas sobre a alimentação do seu pet.</p>
+      <div class="cartao-info"><p>Esta pesquisa é acadêmica e independente do atendimento que você recebe aqui. Participar ou não, não altera em nada o seu atendimento, e o WhatsApp é opcional.</p></div>
+    </section>
+
+    <!-- perguntas geradas dinamicamente -->
+
+    <!-- final -->
+    <section class="tela" id="telaFim">
+      <div class="selo-ok">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+      </div>
+      <h1 id="tituloFim">Registrado.</h1>
+      <p class="apoio" id="textoFim">Sua participação foi registrada.</p>
+      <div class="cartao-info"><p id="notaFim">Obrigado por colaborar com o projeto.</p></div>
+      <div class="gabarito" id="gabarito" hidden></div>
+      <div class="gabarito" id="notasFinais"><div class="item-gab"><div class="tema">Sobre a quantidade</div><div class="resposta">A tabela da embalagem é ponto de partida, não regra fixa</div><div class="porque">A quantidade indicada considera um animal adulto, castrado ou não, com atividade média. Porte, idade, castração e rotina mudam a necessidade — por isso o ajuste fino é feito pelo veterinário, acompanhando o peso.</div></div><div class="item-gab"><div class="tema">Sobre petiscos</div><div class="resposta">Petiscos e sobras contam como calorias do dia</div><div class="porque">A recomendação usual é que petiscos não passem de cerca de 10% das calorias diárias. Acima disso, além do excesso de peso, a dieta perde o equilíbrio de nutrientes que a ração fornece.</div></div><div class="item-gab"><div class="tema">Sobre comida caseira</div><div class="resposta">Alimentação natural precisa de formulação</div><div class="porque">Comida caseira pode ser uma boa opção, mas montada no olho ela costuma faltar cálcio e outros nutrientes. Quando bem formulada por um profissional, é completa como qualquer outra dieta.</div></div></div>
+    </section>
+
+  </main>
+
+  <footer class="rodape">
+    <button class="btn" id="btnAvancar" type="button">
+      <span id="txtBtn">Participar</span>
+      <svg id="setaBtn" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </button>
+    <button class="btn fantasma" id="btnGabarito" type="button" hidden>Ver o que a ciência diz</button>
+    <div class="rodape-nota" id="notaRodape">Participação voluntária e anônima no relatório final.</div>
+  </footer>
+
+</div>
+
+<script>
+/* =========================================================================
+   CONFIGURAÇÃO - preencha com os dados do seu projeto Supabase
+   Settings > API  ->  Project URL e anon public key
+   ========================================================================= */
+const CONFIG = {
+  SUPABASE_URL:  "https://xplulvkgumomxjpctdah.supabase.co",
+  SUPABASE_ANON: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhwbHVsdmtndW1vbXhqcGN0ZGFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1NzkyNDQsImV4cCI6MjEwNjE1NTI0NH0.rB7cmw8SSUd04yt4O6jO1CVzFsJVW7UnieOZF00lsuE",
+  TABELA:        "pesquisa_respostas_clinica",
+  TABELA_EVENTOS:"pesquisa_eventos",
+  CANAL:         "clinica",
+  CAMPO_ORIGEM:  "local_codigo",   // coluna que recebe o código do local/ponto
+  PARAM_ORIGEM:  "local",   // parâmetro da URL: ?local=codigo
+  ORIGEM_FIXA:   "clinica-18",    // preenchido nas pastas numeradas (/1, /2, ...)
+  FILA_KEY:      "fila_pesquisa_clinica"
+};
+
+/* Roteiro do questionário - gerado por build.py */
+const PASSOS = [
+  {
+    "tipo": "escolha",
+    "campo": "q1_escolha_racao",
+    "selo": "Alimentação 1",
+    "titulo": "Na hora de escolher a ração do seu pet, o que mais pesa na decisão?",
+    "apoio": "Escolha o principal.",
+    "opcoes": [
+      {
+        "v": "a",
+        "t": "O preço"
+      },
+      {
+        "v": "b",
+        "t": "A indicação do veterinário"
+      },
+      {
+        "v": "c",
+        "t": "A indicação do petshop ou de quem vende"
+      },
+      {
+        "v": "d",
+        "t": "A marca que já conheço ou que ele aceita bem"
+      },
+      {
+        "v": "e",
+        "t": "O que vejo na internet e nas redes sociais"
+      }
+    ],
+    "erro": "Escolha uma das alternativas."
+  },
+  {
+    "tipo": "escolha",
+    "campo": "q2_medida_racao",
+    "selo": "Alimentação 2",
+    "titulo": "Como você mede a quantidade de ração que oferece por dia?",
+    "opcoes": [
+      {
+        "v": "a",
+        "t": "Uso a medida da embalagem ou a indicada pelo veterinário"
+      },
+      {
+        "v": "b",
+        "t": "Peso a porção em balança"
+      },
+      {
+        "v": "c",
+        "t": "Encho o pote no olho, quando vejo que acabou"
+      },
+      {
+        "v": "d",
+        "t": "Deixo comida à vontade o dia inteiro"
+      },
+      {
+        "v": "e",
+        "t": "Não sou eu quem cuida disso"
+      }
+    ],
+    "erro": "Escolha uma das alternativas."
+  },
+  {
+    "tipo": "escolha",
+    "campo": "q3_complemento",
+    "selo": "Alimentação 3",
+    "titulo": "Além da ração, o que seu pet costuma comer?",
+    "opcoes": [
+      {
+        "v": "a",
+        "t": "Só ração"
+      },
+      {
+        "v": "b",
+        "t": "Ração e petiscos industrializados"
+      },
+      {
+        "v": "c",
+        "t": "Ração e comida da nossa mesa"
+      },
+      {
+        "v": "d",
+        "t": "Alimentação natural preparada para ele"
+      },
+      {
+        "v": "e",
+        "t": "Ração e suplementos"
+      }
+    ],
+    "erro": "Escolha uma das alternativas."
+  },
+  {
+    "tipo": "escolha",
+    "campo": "q4_barreira",
+    "selo": "Alimentação 4",
+    "titulo": "O que mais te atrapalha hoje a dar a melhor alimentação possível para ele?",
+    "opcoes": [
+      {
+        "v": "a",
+        "t": "O preço da ração de boa qualidade"
+      },
+      {
+        "v": "b",
+        "t": "Não sei qual é a mais adequada para ele"
+      },
+      {
+        "v": "c",
+        "t": "Ele é enjoado e recusa"
+      },
+      {
+        "v": "d",
+        "t": "Falta de tempo para organizar a alimentação"
+      },
+      {
+        "v": "e",
+        "t": "Nada, estou satisfeito com o que ofereço"
+      }
+    ],
+    "erro": "Escolha uma das alternativas."
+  },
+  {
+    "tipo": "longo",
+    "campo": "q5_duvida",
+    "selo": "Alimentação 5",
+    "titulo": "Se um veterinário pudesse responder uma dúvida sua agora, qual seria?",
+    "apoio": "Pode ser sobre alimentação ou qualquer outro cuidado. Escreva do seu jeito.",
+    "placeholder": "Escreva aqui a sua dúvida",
+    "dica": "Opcional, mas é a resposta que mais ajuda o projeto.",
+    "opcional": true,
+    "rotuloPular": "Não tenho dúvidas agora",
+    "minimo": 3
+  },
+  {
+    "tipo": "texto",
+    "campo": "nome",
+    "curta": true,
+    "titulo": "Como podemos te chamar?",
+    "apoio": "Pode ser só o primeiro nome.",
+    "placeholder": "Seu nome",
+    "erro": "Escreva seu nome para continuar."
+  },
+  {
+    "tipo": "tel",
+    "campo": "contato",
+    "curta": true,
+    "titulo": "Qual o seu WhatsApp?",
+    "apoio": "É por onde a gente retorna, se precisar.",
+    "placeholder": "(79) 90000-0000",
+    "dica": "Opcional. Se preferir não informar, é só seguir.",
+    "erro": "Confira o número: DDD + 8 ou 9 dígitos.",
+    "opcional": true,
+    "rotuloPular": "Prefiro não informar"
+  },
+  {
+    "tipo": "escolha",
+    "campo": "aceita_dicas",
+    "curta": true,
+    "titulo": "Quer receber dicas de cuidado para o seu pet?",
+    "apoio": "Conteúdo curto, sem custo, e você pode pedir para sair quando quiser.",
+    "opcoes": [
+      {
+        "v": true,
+        "t": "Sim, quero receber",
+        "sub": "Dicas de saúde, alimentação e bem-estar animal"
+      },
+      {
+        "v": false,
+        "t": "Não, obrigado",
+        "sub": "Participo da pesquisa sem receber conteúdo"
+      }
+    ],
+    "erro": "Escolha uma das duas opções.",
+    "exigeCampo": "contato"
+  },
+  {
+    "tipo": "consent",
+    "campo": "consentimento",
+    "curta": true,
+    "titulo": "Autorização de uso dos dados",
+    "termo": "Os dados informados serão utilizados exclusivamente para fins desta pesquisa de extensão universitária e para o envio do conteúdo, caso você tenha aceitado. Não serão repassados a terceiros e podem ser excluídos a qualquer momento mediante solicitação, conforme a Lei Geral de Proteção de Dados (Lei 13.709/2018).",
+    "rotulo": "Li e autorizo o uso dos meus dados nos termos acima.",
+    "erro": "Marque a autorização para enviar."
+  }
+];
+
+/* ===================== estado ===================== */
+const params    = new URLSearchParams(location.search);
+// a pasta manda: /7/index.html ja sabe que e a clinica 7, sem depender da URL
+const origem    = CONFIG.ORIGEM_FIXA || (params.get(CONFIG.PARAM_ORIGEM) || "").trim().toLowerCase() || null;
+const aplicador = (params.get("por") || "").trim() || null;
+
+const estado = {
+  i: -1,                      // -1 = abertura ; PASSOS.length = tela final
+  resp: {},
+  sessao: (crypto.randomUUID ? crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==="x"?r:(r&0x3|0x8)).toString(16)})),
+  inicio: Date.now(),
+  enviando: false
+};
+
+const palco    = document.getElementById("palco");
+const telaFim  = document.getElementById("telaFim");
+const btn      = document.getElementById("btnAvancar");
+const txtBtn   = document.getElementById("txtBtn");
+const setaBtn  = document.getElementById("setaBtn");
+const btnVolta = document.getElementById("btnVoltar");
+const btnGab   = document.getElementById("btnGabarito");
+const trilho   = document.getElementById("trilho");
+const barra    = document.getElementById("barra");
+const passoTxt = document.getElementById("passo");
+const notaRod  = document.getElementById("notaRodape");
+
+/* ===================== montagem das telas ===================== */
+function esc(t){ const d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
+const CHECK = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+
+PASSOS.forEach((p, i) => {
+  const sec = document.createElement("section");
+  sec.className = "tela";
+  sec.dataset.i = i;
+  let html = "";
+
+  if (p.selo)   html += '<div class="selo mini">' + esc(p.selo) + '</div>';
+  html += '<h2' + (p.curta ? ' class="curta"' : '') + '>' + esc(p.titulo) + '</h2>';
+  if (p.apoio)  html += '<p class="apoio menor">' + esc(p.apoio) + '</p>';
+
+  if (p.tipo === "texto" || p.tipo === "tel"){
+    html += '<div class="campo-area">'
+         +  '<input class="campo" id="campo-' + i + '" type="' + (p.tipo === "tel" ? "tel" : "text") + '"'
+         +  ' inputmode="' + (p.tipo === "tel" ? "numeric" : "text") + '"'
+         +  ' autocomplete="' + (p.tipo === "tel" ? "tel" : "given-name") + '"'
+         +  ' placeholder="' + esc(p.placeholder || "") + '" enterkeyhint="next"'
+         +  (p.tipo === "tel" ? ' maxlength="16"' : ' maxlength="80" autocapitalize="words"') + '>'
+         +  (p.dica ? '<div class="dica-campo">' + esc(p.dica) + '</div>' : '')
+         +  '<div class="aviso" id="aviso-' + i + '"></div>'
+         +  '</div>';
+  }
+
+  if (p.tipo === "longo"){
+    html += '<div class="campo-area">'
+         +  '<textarea class="campo area" id="campo-' + i + '" maxlength="600" rows="4"'
+         +  ' placeholder="' + esc(p.placeholder || "") + '"></textarea>'
+         +  (p.dica ? '<div class="dica-campo">' + esc(p.dica) + '</div>' : '')
+         +  '<div class="aviso" id="aviso-' + i + '"></div>'
+         +  '</div>';
+  }
+
+  if (p.tipo === "escolha"){
+    html += '<div class="opcoes">';
+    p.opcoes.forEach(o => {
+      html += '<button class="opcao' + (o.sub ? ' destaque' : '') + '" type="button" data-v="' + esc(String(o.v)) + '">'
+           +  '<span class="marca">' + CHECK + '</span>'
+           +  '<span class="opcao-txt"><span class="opcao-tit">' + esc(o.t) + '</span>'
+           +  (o.sub ? '<span class="opcao-sub">' + esc(o.sub) + '</span>' : '')
+           +  '</span></button>';
+    });
+    html += '</div><div class="aviso" id="aviso-' + i + '"></div>';
+  }
+
+  if (p.tipo === "consent"){
+    html += '<div class="termo"><p>' + esc(p.termo) + '</p></div>'
+         +  '<label class="aceite" id="aceite-' + i + '">'
+         +  '<span class="caixa">' + CHECK + '</span><span>' + esc(p.rotulo) + '</span></label>'
+         +  '<div class="aviso" id="aviso-' + i + '"></div>';
+  }
+
+  sec.innerHTML = html;
+  palco.insertBefore(sec, telaFim);
+});
+
+const telas = PASSOS.map((p,i) => palco.querySelector('.tela[data-i="' + i + '"]'));
+const telaInicio = document.getElementById("telaInicio");
+
+/* ===================== utilidades ===================== */
+function tipoDispositivo(){
+  const l = Math.min(screen.width, screen.height);
+  return l < 600 ? "mobile" : (l < 1024 ? "tablet" : "desktop");
+}
+function vibra(ms){ if (navigator.vibrate){ try{ navigator.vibrate(ms); }catch(e){} } }
+function alertar(i, msg){
+  const el = document.getElementById("aviso-" + i);
+  if (!el) return;
+  el.textContent = msg; el.classList.add("on"); vibra(35);
+  setTimeout(()=>el.classList.remove("on"), 4200);
+}
+function soDigitos(v){ return (v||"").replace(/\D/g,""); }
+function formatarTelefone(v){
+  const d = soDigitos(v).slice(0,11);
+  if (d.length <= 2)  return d.length ? "(" + d : "";
+  if (d.length <= 6)  return "(" + d.slice(0,2) + ") " + d.slice(2);
+  if (d.length <= 10) return "(" + d.slice(0,2) + ") " + d.slice(2,6) + "-" + d.slice(6);
+  return "(" + d.slice(0,2) + ") " + d.slice(2,7) + "-" + d.slice(7);
+}
+function telefoneValido(v){
+  const d = soDigitos(v);
+  if (d.length < 10 || d.length > 11) return false;
+  if (/^(\d)\1+$/.test(d)) return false;
+  const ddd = parseInt(d.slice(0,2),10);
+  if (ddd < 11 || ddd > 99) return false;
+  if (d.length === 11 && d[2] !== "9") return false;
+  return true;
+}
+
+/* ===================== navegação ===================== */
+/* Um passo com "exigeCampo" só aparece se aquele campo tiver sido preenchido.
+   É o que faz a tela de dicas sumir para quem não deixou WhatsApp. */
+function visivel(i){
+  const p = PASSOS[i];
+  if (!p) return false;
+  if (p.exigeCampo){
+    const v = estado.resp[p.exigeCampo];
+    if (v === undefined || v === null || v === "") return false;
+  }
+  return true;
+}
+function totalVisiveis(){ return PASSOS.reduce((n,_,i)=> n + (visivel(i) ? 1 : 0), 0); }
+function posicaoVisivel(i){ let n = 0; for (let k = 0; k <= i; k++) if (visivel(k)) n++; return n; }
+function proximo(i){ let k = i + 1; while (k < PASSOS.length && !visivel(k)) k++; return k; }
+function anterior(i){ let k = i - 1; while (k >= 0 && !visivel(k)) k--; return k; }
+function ehUltimo(i){ return proximo(i) >= PASSOS.length; }
+
+function vazio(i){
+  const p = PASSOS[i];
+  if (!p) return false;
+  if (p.tipo === "texto" || p.tipo === "tel" || p.tipo === "longo"){
+    const c = document.getElementById("campo-" + i);
+    return !c || !c.value.trim();
+  }
+  return false;
+}
+function rotuloBotao(){
+  if (estado.i === -1) return "Participar";
+  const p = PASSOS[estado.i];
+  if (p && p.opcional && vazio(estado.i)) return p.rotuloPular || "Pular esta pergunta";
+  return ehUltimo(estado.i) ? "Enviar respostas" : "Continuar";
+}
+function atualizarBotao(){
+  txtBtn.textContent = rotuloBotao();
+  const seta = estado.i === -1 || !ehUltimo(estado.i);
+  setaBtn.style.display = seta ? "" : "none";
+}
+
+function pintar(){
+  telaInicio.classList.toggle("ativa", estado.i === -1);
+  telaFim.classList.toggle("ativa", estado.i === PASSOS.length);
+  telas.forEach((t,i)=> t.classList.toggle("ativa", i === estado.i));
+
+  const emPerguntas = estado.i >= 0 && estado.i < PASSOS.length;
+  trilho.classList.toggle("on", emPerguntas);
+  passoTxt.classList.toggle("on", emPerguntas);
+  btnVolta.classList.toggle("on", emPerguntas);
+  if (emPerguntas){
+    const total = totalVisiveis(), pos = posicaoVisivel(estado.i);
+    barra.style.width = (pos / total * 100) + "%";
+    passoTxt.textContent = pos + "/" + total;
+  }
+
+  atualizarBotao();
+  btn.style.display = (estado.i === PASSOS.length) ? "none" : "";
+  notaRod.style.display = (estado.i === -1 || estado.i === PASSOS.length) ? "" : "none";
+  btn.disabled = false;
+  palco.scrollTop = 0;
+
+  const p = PASSOS[estado.i];
+  if (p && (p.tipo === "texto" || p.tipo === "tel" || p.tipo === "longo")){
+    setTimeout(()=>{ const c = document.getElementById("campo-" + estado.i); if (c) c.focus(); }, 340);
+  }
+}
+function ir(n){
+  estado.i = n;
+  pintar();
+  const p = PASSOS[n];
+  if (p) registrarEvento(p.campo || ("passo" + n), n + 1);
+}
+function validar(){
+  const i = estado.i, p = PASSOS[i];
+  if (!p) return true;
+
+  // campo opcional deixado em branco: segue em frente gravando vazio
+  if (p.opcional && vazio(i)){ estado.resp[p.campo] = null; return true; }
+
+  if (p.tipo === "texto" || p.tipo === "longo"){
+    const c = document.getElementById("campo-" + i);
+    const v = c.value.trim().replace(/[ \t]+/g," ");
+    if (v.length < (p.minimo || 2)){ alertar(i, p.erro || "Preencha para continuar."); c.classList.add("ruim"); return false; }
+    c.classList.remove("ruim"); estado.resp[p.campo] = v; return true;
+  }
+  if (p.tipo === "tel"){
+    const c = document.getElementById("campo-" + i);
+    if (!telefoneValido(c.value)){ alertar(i, p.erro || "Confira o número digitado."); c.classList.add("ruim"); return false; }
+    c.classList.remove("ruim"); estado.resp[p.campo] = c.value.trim(); return true;
+  }
+  if (p.tipo === "escolha"){
+    if (estado.resp[p.campo] === undefined){ alertar(i, p.erro || "Escolha uma das opções."); return false; }
+    return true;
+  }
+  if (p.tipo === "consent"){
+    if (!estado.resp[p.campo]){ alertar(i, p.erro || "Marque a autorização para enviar."); return false; }
+    return true;
+  }
+  return true;
+}
+function avancar(){
+  if (estado.i === -1){ ir(proximo(-1)); return; }
+  if (!validar()) return;
+  if (ehUltimo(estado.i)){ enviar(); return; }
+  ir(proximo(estado.i));
+}
+function voltar(){ if (estado.i >= 0) ir(anterior(estado.i)); }
+
+btn.addEventListener("click", avancar);
+btnVolta.addEventListener("click", voltar);
+document.addEventListener("keydown", e => { if (e.key === "Escape") voltar(); });
+
+/* ---- delegação de eventos das telas geradas ---- */
+palco.addEventListener("click", e => {
+  const op = e.target.closest(".opcao");
+  if (op){
+    const sec = op.closest(".tela"); const i = +sec.dataset.i; const p = PASSOS[i];
+    sec.querySelectorAll(".opcao").forEach(o => o.classList.remove("sel"));
+    op.classList.add("sel");
+    let v = op.dataset.v;
+    if (v === "true" || v === "false") v = (v === "true");
+    estado.resp[p.campo] = v;
+    vibra(12);
+    if (p.auto !== false) setTimeout(()=>{ if (estado.i === i) avancar(); }, 320);
+    return;
+  }
+  const ac = e.target.closest(".aceite");
+  if (ac){
+    e.preventDefault();
+    const i = +ac.closest(".tela").dataset.i; const p = PASSOS[i];
+    estado.resp[p.campo] = !estado.resp[p.campo];
+    ac.classList.toggle("sel", !!estado.resp[p.campo]);
+    vibra(12);
+  }
+});
+palco.addEventListener("input", e => {
+  const c = e.target.closest(".campo");
+  if (!c) return;
+  const i = +c.closest(".tela").dataset.i;
+  c.classList.remove("ruim");
+  if (PASSOS[i].tipo === "tel"){
+    const fim = c.selectionStart === c.value.length;
+    c.value = formatarTelefone(c.value);
+    if (fim) c.setSelectionRange(c.value.length, c.value.length);
+  }
+  atualizarBotao();      // "Pular esta pergunta" vira "Continuar" ao digitar
+});
+palco.addEventListener("keydown", e => {
+  // Enter avança nos campos de uma linha; no texto longo ele quebra linha normalmente
+  if (e.key === "Enter" && e.target.matches("input.campo")){ e.preventDefault(); avancar(); }
+});
+
+/* ===================== supabase ===================== */
+function configurado(){
+  return CONFIG.SUPABASE_URL.indexOf("supabase.co") !== -1 && CONFIG.SUPABASE_ANON.length > 40;
+}
+function cabecalhos(){
+  return {
+    "apikey": CONFIG.SUPABASE_ANON,
+    "Authorization": "Bearer " + CONFIG.SUPABASE_ANON,
+    "Content-Type": "application/json",
+    "Prefer": "return=minimal"
+  };
+}
+async function postar(tabela, corpo){
+  const r = await fetch(CONFIG.SUPABASE_URL + "/rest/v1/" + tabela, {
+    method: "POST", headers: cabecalhos(), body: JSON.stringify(corpo)
+  });
+  if (!r.ok){
+    const txt = await r.text();
+    const err = new Error(txt || ("HTTP " + r.status));
+    err.status = r.status; err.corpo = txt;
+    throw err;
+  }
+  return true;
+}
+function registrarEvento(etapa, ordem){
+  if (!configurado() || !etapa) return;
+  try{
+    fetch(CONFIG.SUPABASE_URL + "/rest/v1/" + CONFIG.TABELA_EVENTOS, {
+      method:"POST", headers: cabecalhos(), keepalive: true,
+      body: JSON.stringify({
+        canal: CONFIG.CANAL, sessao_id: estado.sessao, etapa: etapa,
+        ordem: ordem, local_codigo: origem, dispositivo: tipoDispositivo()
+      })
+    }).catch(()=>{});
+  }catch(e){}
+}
+
+function montarRegistro(){
+  const reg = {
+    sessao_id: estado.sessao,
+    duracao_seg: Math.max(1, Math.round((Date.now() - estado.inicio)/1000)),
+    dispositivo: tipoDispositivo(),
+    user_agent: navigator.userAgent.slice(0,400),
+    referer: document.referrer ? document.referrer.slice(0,300) : null
+  };
+  PASSOS.forEach(p => { if (p.campo) reg[p.campo] = estado.resp[p.campo] ?? null; });
+  reg[CONFIG.CAMPO_ORIGEM] = origem;
+  if (CONFIG.CANAL === "rua") reg.entrevistador = aplicador;
+  return reg;
+}
+
+/* fila local para quando o sinal cai (coleta de rua) */
+function guardarNaFila(reg){
+  try{
+    const fila = JSON.parse(localStorage.getItem(CONFIG.FILA_KEY) || "[]");
+    fila.push(reg);
+    localStorage.setItem(CONFIG.FILA_KEY, JSON.stringify(fila));
+  }catch(e){}
+}
+async function enviarFila(){
+  if (!configurado()) return;
+  let fila = [];
+  try{ fila = JSON.parse(localStorage.getItem(CONFIG.FILA_KEY) || "[]"); }catch(e){ return; }
+  if (!fila.length) return;
+  const restantes = [];
+  for (const reg of fila){
+    try{ await postar(CONFIG.TABELA, reg); }
+    catch(err){ if (err.status !== 409) restantes.push(reg); }
+  }
+  try{ localStorage.setItem(CONFIG.FILA_KEY, JSON.stringify(restantes)); }catch(e){}
+}
+
+async function enviar(){
+  if (estado.enviando) return;
+  estado.enviando = true;
+  btn.disabled = true;
+  txtBtn.textContent = "Enviando";
+  setaBtn.style.display = "none";
+  const load = document.createElement("span");
+  load.className = "girando"; btn.appendChild(load);
+
+  const reg = montarRegistro();
+
+  if (!configurado()){            // modo demonstração
+    guardarNaFila(reg);
+    load.remove(); estado.enviando = false;
+    concluir("demo"); return;
+  }
+  try{
+    await postar(CONFIG.TABELA, reg);
+    load.remove(); estado.enviando = false;
+    enviarFila();
+    concluir("ok");
+  }catch(err){
+    load.remove(); estado.enviando = false;
+    if (err.status === 409){ concluir("repetido"); return; }
+    guardarNaFila(reg);
+    concluir("fila");
+  }
+}
+
+/* ===================== conclusão e gabarito ===================== */
+function montarGabarito(){
+  const quiz = PASSOS.filter(p => p.correta);
+  if (!quiz.length) return;
+  const cx = document.getElementById("gabarito");
+  cx.innerHTML = quiz.map(p => {
+    const marcou  = estado.resp[p.campo];
+    const acertou = marcou === p.correta;
+    const certa   = p.opcoes.find(o => o.v === p.correta);
+    return '<div class="item-gab">'
+      + '<div class="tema"><span class="pastilha ' + (acertou ? 'certo' : 'errado') + '">'
+      + (acertou ? '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="' + getComputedStyle(document.documentElement).getPropertyValue("--acento") + '" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>' : '')
+      + '</span>' + esc(p.tema || p.selo || "") + '</div>'
+      + '<div class="resposta">' + esc(certa ? certa.t : "") + '</div>'
+      + '<div class="porque">' + esc(p.explicacao || "") + '</div>'
+      + '</div>';
+  }).join("");
+  const acertos = quiz.filter(p => estado.resp[p.campo] === p.correta).length;
+  btnGab.hidden = false;
+  btnGab.textContent = "Ver o que a ciência diz (" + acertos + " de " + quiz.length + ")";
+  btnGab.onclick = () => {
+    const aberto = !cx.hidden;
+    cx.hidden = aberto;
+    btnGab.textContent = aberto
+      ? "Ver o que a ciência diz (" + acertos + " de " + quiz.length + ")"
+      : "Ocultar explicações";
+    if (!aberto) setTimeout(()=>{ palco.scrollTop = palco.scrollHeight; }, 60);
+  };
+}
+
+function concluir(modo){
+  const nomeCampo = (PASSOS.find(p => p.tipo === "texto") || {}).campo;
+  const primeiro = ((estado.resp[nomeCampo] || "").split(" ")[0]) || "";
+  const ola = primeiro ? "Obrigado, " + primeiro + ". " : "Obrigado. ";
+  const t = document.getElementById("tituloFim");
+  const x = document.getElementById("textoFim");
+  const n = document.getElementById("notaFim");
+
+  if (modo === "repetido"){
+    t.textContent = "Você já participou";
+    x.textContent = "Esse contato já consta na pesquisa" + (primeiro ? ", " + primeiro : "") + ". Não precisa responder de novo.";
+    n.textContent = "Obrigado por colaborar com o projeto.";
+  } else if (modo === "fila"){
+    t.textContent = "Resposta salva";
+    x.textContent = ola + "A conexão oscilou, mas sua resposta ficou guardada no aparelho e sobe automaticamente quando a internet voltar.";
+    n.textContent = "Não feche esta página antes de recuperar o sinal.";
+    montarGabarito();
+  } else {
+    t.textContent = "Participação registrada.";
+    x.textContent = ola + "Sua resposta entra na apuração da pesquisa. Abaixo, três pontos sobre alimentação que costumam gerar dúvida.";
+    n.textContent = estado.resp.aceita_dicas ? "Em breve você recebe as primeiras dicas no WhatsApp informado." : "Seus dados entram apenas na apuração da pesquisa, sem envio de conteúdo.";
+    montarGabarito();
+  }
+  registrarEvento("concluiu", PASSOS.length + 1);
+  estado.i = PASSOS.length;
+  pintar();
+  vibra([18,60,18]);
+}
+
+/* ===================== inicialização ===================== */
+window.addEventListener("online", enviarFila);
+registrarEvento("abriu", 0);
+enviarFila();
+pintar();
+</script>
+</body>
+</html>

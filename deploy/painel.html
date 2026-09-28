@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel da Pesquisa de Extensão</title>
+<style>
+:root{
+  color-scheme: light;
+  --plano:#f9f9f7;
+  --cartao:#fcfcfb;
+  --tinta:#0b0b0b;
+  --tinta2:#52514e;
+  --tinta3:#898781;
+  --grade:#e1e0d9;
+  --eixo:#c3c2b7;
+  --borda:rgba(11,11,11,.10);
+  --c1:#2a78d6; --c2:#eb6834; --c3:#1baf7a; --c4:#eda100; --c5:#e87ba4;
+  --bom:#0ca30c; --atencao:#fab219; --serio:#ec835a; --critico:#d03b3b;
+  --sombra:0 1px 2px rgba(11,11,11,.06), 0 8px 24px rgba(11,11,11,.05);
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-tema="light"]){
+    color-scheme: dark;
+    --plano:#0d0d0d; --cartao:#1a1a19; --tinta:#ffffff; --tinta2:#c3c2b7; --tinta3:#898781;
+    --grade:#2c2c2a; --eixo:#383835; --borda:rgba(255,255,255,.10);
+    --c1:#3987e5; --c2:#d95926; --c3:#199e70; --c4:#c98500; --c5:#d55181;
+    --sombra:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+  }
+}
+:root[data-tema="dark"]{
+  color-scheme: dark;
+  --plano:#0d0d0d; --cartao:#1a1a19; --tinta:#ffffff; --tinta2:#c3c2b7; --tinta3:#898781;
+  --grade:#2c2c2a; --eixo:#383835; --borda:rgba(255,255,255,.10);
+  --c1:#3987e5; --c2:#d95926; --c3:#199e70; --c4:#c98500; --c5:#d55181;
+  --sombra:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:var(--plano);color:var(--tinta);
+  -webkit-font-smoothing:antialiased;font-size:15px;line-height:1.5;
+}
+[hidden]{display:none !important}
+button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit}
+input,select,textarea{font-family:inherit;font-size:14px}
+
+/* ---------------- login ---------------- */
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.login-caixa{width:100%;max-width:380px;background:var(--cartao);border:1px solid var(--borda);border-radius:var(--r);padding:28px;box-shadow:var(--sombra)}
+.login h1{font-size:21px;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
+.login p.sub{font-size:14px;color:var(--tinta2);margin-bottom:22px}
+.campo{width:100%;padding:12px 14px;border:1px solid var(--borda);border-radius:10px;background:var(--plano);color:var(--tinta);margin-bottom:10px;outline:0}
+.campo:focus{border-color:var(--c1);box-shadow:0 0 0 3px color-mix(in srgb,var(--c1) 18%,transparent)}
+.btn{background:var(--c1);color:#fff;padding:12px 16px;border-radius:10px;font-weight:600;font-size:14.5px;width:100%;transition:filter .15s}
+.btn:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.secundario{background:transparent;color:var(--tinta2);border:1px solid var(--borda);margin-top:8px}
+.erro{background:color-mix(in srgb,var(--critico) 12%,transparent);color:var(--critico);padding:10px 12px;border-radius:9px;font-size:13.5px;margin-bottom:12px;font-weight:500}
+
+/* ---------------- estrutura ---------------- */
+.topo{
+  position:sticky;top:0;z-index:20;background:var(--cartao);border-bottom:1px solid var(--borda);
+  padding:0 20px;display:flex;align-items:center;gap:16px;height:58px;
+}
+.marca{font-weight:700;letter-spacing:-.02em;font-size:15.5px;white-space:nowrap}
+.marca span{color:var(--tinta3);font-weight:500}
+.topo-dir{margin-left:auto;display:flex;align-items:center;gap:8px}
+.mini{font-size:13px;color:var(--tinta2);padding:7px 11px;border:1px solid var(--borda);border-radius:9px;transition:background .15s}
+.mini:hover{background:var(--plano)}
+.abas{display:flex;gap:2px;padding:0 20px;background:var(--cartao);border-bottom:1px solid var(--borda);overflow-x:auto;position:sticky;top:58px;z-index:19}
+.aba{padding:12px 14px;font-size:14px;font-weight:500;color:var(--tinta2);border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s}
+.aba:hover{color:var(--tinta)}
+.aba.on{color:var(--tinta);border-bottom-color:var(--c1);font-weight:600}
+main{padding:22px 20px 60px;max-width:1280px;margin:0 auto}
+.filtros{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+.chip{font-size:13px;padding:7px 12px;border:1px solid var(--borda);border-radius:99px;color:var(--tinta2);transition:all .15s}
+.chip:hover{background:var(--cartao)}
+.chip.on{background:var(--tinta);color:var(--plano);border-color:var(--tinta);font-weight:600}
+.filtros .sep{width:1px;height:20px;background:var(--borda);margin:0 4px}
+
+h2.titulo{font-size:17px;font-weight:700;letter-spacing:-.015em;margin:28px 0 4px}
+h2.titulo:first-child{margin-top:0}
+p.legenda{font-size:13.5px;color:var(--tinta2);margin-bottom:14px;max-width:70ch}
+
+/* ---------------- cartões ---------------- */
+.grade{display:grid;gap:14px}
+.g-kpi{grid-template-columns:repeat(auto-fit,minmax(168px,1fr))}
+.g2{grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+.cartao{background:var(--cartao);border:1px solid var(--borda);border-radius:var(--r);padding:18px;box-shadow:var(--sombra)}
+.kpi .rot{font-size:12.5px;color:var(--tinta2);font-weight:500;margin-bottom:7px}
+.kpi .num{font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.kpi .pe{font-size:12.5px;color:var(--tinta3);margin-top:6px}
+.cartao h3{font-size:14.5px;font-weight:650;margin-bottom:3px;letter-spacing:-.01em}
+.cartao .sub{font-size:12.5px;color:var(--tinta2);margin-bottom:14px;line-height:1.45}
+
+/* ---------------- gráficos ---------------- */
+svg{display:block;width:100%;height:auto;overflow:visible}
+.viz-alto{max-height:none}
+.rot-eixo{font-size:11.5px;fill:var(--tinta3)}
+.rot-valor{font-size:12px;fill:var(--tinta2);font-weight:600;font-variant-numeric:tabular-nums}
+.rot-cat{font-size:12.5px;fill:var(--tinta);font-weight:500}
+.linha-grade{stroke:var(--grade);stroke-width:1}
+.linha-eixo{stroke:var(--eixo);stroke-width:1}
+.marca-barra{transition:opacity .12s}
+.marca-barra:hover{opacity:.82}
+.legenda-cores{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:12px;color:var(--tinta2)}
+.legenda-cores i{width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:-1px}
+.dica{
+  position:fixed;pointer-events:none;z-index:99;background:var(--tinta);color:var(--plano);
+  padding:7px 10px;border-radius:8px;font-size:12.5px;line-height:1.45;opacity:0;transition:opacity .12s;
+  max-width:260px;box-shadow:0 6px 20px rgba(0,0,0,.25);font-weight:500;
+}
+.dica.on{opacity:1}
+.vazio{padding:34px 18px;text-align:center;color:var(--tinta3);font-size:13.5px}
+
+/* ---------------- tabelas ---------------- */
+.tab-rolo{overflow-x:auto;border:1px solid var(--borda);border-radius:var(--r);background:var(--cartao)}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--tinta3);font-weight:600;padding:11px 12px;border-bottom:1px solid var(--borda);white-space:nowrap;background:var(--cartao);position:sticky;top:0}
+td{padding:11px 12px;border-bottom:1px solid var(--borda);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--plano)}
+tbody tr.aberta{background:color-mix(in srgb,var(--c3) 10%,transparent);box-shadow:inset 3px 0 0 var(--c3)}
+.tag{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.tag.rua{background:color-mix(in srgb,var(--c2) 15%,transparent);color:var(--c2)}
+.tag.clinica{background:color-mix(in srgb,var(--c3) 15%,transparent);color:var(--c3)}
+.sel-status{padding:5px 8px;border:1px solid var(--borda);border-radius:8px;background:var(--plano);color:var(--tinta);font-size:12.5px}
+.zap{color:var(--bom);font-weight:600;font-size:12.5px;text-decoration:none;white-space:nowrap}
+.zap:hover{text-decoration:underline}
+.obs{width:100%;border:1px solid transparent;background:transparent;border-radius:7px;padding:5px 7px;color:var(--tinta);font-size:13px;min-width:130px}
+.obs:hover{border-color:var(--borda)}
+.obs:focus{border-color:var(--c1);background:var(--plano);outline:0}
+.busca{flex:1;min-width:180px;max-width:300px;padding:9px 12px;border:1px solid var(--borda);border-radius:9px;background:var(--cartao);color:var(--tinta);outline:0}
+.duvida-item{background:var(--cartao);border:1px solid var(--borda);border-left:3px solid var(--c3);border-radius:10px;padding:13px 15px;margin-bottom:9px}
+.duvida-item p{font-size:14px;line-height:1.55}
+.paginacao{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;font-size:13px;color:var(--tinta2)}
+.paginacao .chip[disabled]{opacity:.4;cursor:not-allowed}
+.duvida-item .meta{font-size:11.5px;color:var(--tinta3);margin-top:7px}
+.aviso-demo{background:color-mix(in srgb,var(--atencao) 16%,transparent);border:1px solid color-mix(in srgb,var(--atencao) 40%,transparent);color:var(--tinta);padding:11px 15px;border-radius:10px;font-size:13.5px;margin-bottom:18px;display:flex;align-items:center;gap:10px}
+.carregando{padding:60px;text-align:center;color:var(--tinta3);font-size:14px}
+
+@media (max-width:640px){
+  main{padding:16px 14px 50px}
+  .topo{padding:0 14px;gap:10px}
+  .marca span{display:none}
+  .abas{padding:0 14px}
+  .kpi .num{font-size:25px}
+}
+@media print{
+  .topo,.abas,.filtros,.aviso-demo{display:none}
+  .cartao{break-inside:avoid;box-shadow:none}
+  main{max-width:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<div class="login" id="telaLogin">
+  <div class="login-caixa">
+    <h1>Painel da pesquisa</h1>
+    <p class="sub">Acesso restrito à equipe do projeto de extensão.</p>
+    <div class="erro" id="erroLogin" hidden></div>
+    <form id="formLogin">
+      <input class="campo" type="email" id="email" placeholder="E-mail" autocomplete="username" required>
+      <input class="campo" type="password" id="senha" placeholder="Senha" autocomplete="current-password" required>
+      <button class="btn" type="submit" id="btnEntrar">Entrar</button>
+    </form>
+    <button class="btn secundario" id="btnDemo">Ver com dados de demonstração</button>
+  </div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div id="app" hidden>
+  <header class="topo">
+    <div class="marca">Pesquisa de Extensão <span>· Tutores de animais</span></div>
+    <div class="topo-dir">
+      <button class="mini" id="btnTema" title="Alternar tema">Tema</button>
+      <button class="mini" id="btnAtualizar">Atualizar</button>
+      <button class="mini" id="btnSair">Sair</button>
+    </div>
+  </header>
+
+  <nav class="abas">
+    <button class="aba on" data-aba="visao">Visão geral</button>
+    <button class="aba" data-aba="rua">Rua · conhecimento</button>
+    <button class="aba" data-aba="clinica">Clínica · nutrição</button>
+    <button class="aba" data-aba="individuais">Respostas</button>
+    <button class="aba" data-aba="leads">Contatos</button>
+  </nav>
+
+  <main>
+    <div class="aviso-demo" id="avisoDemo" hidden>
+      <strong>Modo demonstração.</strong> Os números abaixo são simulados, para você ver o painel antes da coleta começar.
+    </div>
+
+    <div class="filtros" id="filtros">
+      <button class="chip" data-per="7">7 dias</button>
+      <button class="chip" data-per="30">30 dias</button>
+      <button class="chip" data-per="90">90 dias</button>
+      <button class="chip on" data-per="0">Tudo</button>
+      <div class="sep"></div>
+      <select class="sel-status" id="filtroLocal"><option value="">Todos os locais e pontos</option></select>
+      <button class="chip" id="btnCsvTudo" style="margin-left:auto">Baixar CSV completo</button>
+    </div>
+
+    <div id="conteudo"><div class="carregando">Carregando dados…</div></div>
+  </main>
+</div>
+
+<div class="dica" id="dica"></div>
+
+<script>
+/* =========================================================================
+   CONFIGURAÇÃO
+   ========================================================================= */
+const CONFIG = {
+  SUPABASE_URL:  "https://xplulvkgumomxjpctdah.supabase.co",
+  SUPABASE_ANON: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhwbHVsdmtndW1vbXhqcGN0ZGFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1NzkyNDQsImV4cCI6MjEwNjE1NTI0NH0.rB7cmw8SSUd04yt4O6jO1CVzFsJVW7UnieOZF00lsuE"
+};
+
+const CORES = ["var(--c1)","var(--c2)","var(--c3)","var(--c4)","var(--c5)"];
+// nas perguntas com gabarito a correta fica verde (status), entao as erradas
+// saem de uma lista sem o verde categorico, para as duas nao se confundirem
+const CORES_ERRO = ["var(--c1)","var(--c2)","var(--c4)","var(--c5)"];
+const COR_RUA = "var(--c2)", COR_CLI = "var(--c3)";
+const STATUS = {
+  novo:"Novo", contatado:"Contatado", respondeu:"Respondeu",
+  nao_responde:"Não responde", descartado:"Descartado"
+};
+
+/* =========================================================================
+   SESSÃO
+   ========================================================================= */
+const S = {
+  token: null, email: null, demo: false,
+  dados: null, periodo: 0, local: "", aba: "visao"
+};
+
+function salvarSessao(t, e){ try{ localStorage.setItem("painel_sessao", JSON.stringify({t,e,em:Date.now()})); }catch(x){} }
+function lerSessao(){
+  try{
+    const s = JSON.parse(localStorage.getItem("painel_sessao")||"null");
+    if (s && Date.now() - s.em < 55*60*1000) return s;
+  }catch(x){}
+  return null;
+}
+function limparSessao(){ try{ localStorage.removeItem("painel_sessao"); }catch(x){} }
+
+async function entrar(email, senha){
+  const r = await fetch(CONFIG.SUPABASE_URL + "/auth/v1/token?grant_type=password", {
+    method:"POST",
+    headers:{ "apikey": CONFIG.SUPABASE_ANON, "Content-Type":"application/json" },
+    body: JSON.stringify({ email, password: senha })
+  });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error_description || j.msg || j.message || "Não foi possível entrar.");
+  return j.access_token;
+}
+
+async function api(caminho, opcoes){
+  const o = opcoes || {};
+  const r = await fetch(CONFIG.SUPABASE_URL + "/rest/v1/" + caminho, {
+    method: o.metodo || "GET",
+    headers: {
+      "apikey": CONFIG.SUPABASE_ANON,
+      "Authorization": "Bearer " + S.token,
+      "Content-Type": "application/json",
+      "Prefer": o.metodo === "PATCH" ? "return=minimal" : ""
+    },
+    body: o.corpo ? JSON.stringify(o.corpo) : undefined
+  });
+  if (r.status === 401){ sair(); throw new Error("Sessão expirada."); }
+  if (!r.ok) throw new Error(await r.text());
+  return o.metodo === "PATCH" ? true : r.json();
+}
+
+/* =========================================================================
+   CARGA DE DADOS
+   ========================================================================= */
+async function carregar(){
+  if (S.demo){ S.dados = gerarDemo(); return; }
+  const [rua, clinica, eventos, locais, pontos, questoes, opcoes] = await Promise.all([
+    api("pesquisa_respostas_rua?select=*&order=criado_em.desc&limit=5000"),
+    api("pesquisa_respostas_clinica?select=*&order=criado_em.desc&limit=5000"),
+    api("pesquisa_eventos?select=canal,sessao_id,etapa,ordem,ocorrido_em&limit=20000"),
+    api("pesquisa_locais?select=*"),
+    api("pesquisa_pontos_rua?select=*"),
+    api("pesquisa_questoes?select=*&order=canal,ordem"),
+    api("pesquisa_opcoes?select=*&order=canal,questao,ordem")
+  ]);
+  S.dados = { rua, clinica, eventos, locais, pontos, questoes, opcoes };
+}
+
+/* filtros de período e de local aplicados a tudo */
+function noPeriodo(r){
+  if (S.periodo){
+    const limite = Date.now() - S.periodo*86400000;
+    if (new Date(r.criado_em).getTime() < limite) return false;
+  }
+  if (S.local){
+    const cod = r.ponto_codigo || r.local_codigo;
+    if (cod !== S.local) return false;
+  }
+  return true;
+}
+function rua(){     return S.dados.rua.filter(noPeriodo); }
+function clinica(){ return S.dados.clinica.filter(noPeriodo); }
+function todas(){
+  return rua().map(r => ({...r, canal:"rua"})).concat(clinica().map(r => ({...r, canal:"clinica"})));
+}
+
+/* =========================================================================
+   UTILIDADES
+   ========================================================================= */
+const fmt = n => (n === null || n === undefined || isNaN(n)) ? "—" : new Intl.NumberFormat("pt-BR").format(n);
+const pct = (a, b) => b ? Math.round(a/b*1000)/10 : 0;
+const esc = t => { const d = document.createElement("div"); d.textContent = t ?? ""; return d.innerHTML; };
+const dataBR = s => new Date(s).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit", year:"2-digit"});
+const diaISO = s => new Date(s).toISOString().slice(0,10);
+
+const dica = document.getElementById("dica");
+function ligarDica(el, texto){
+  el.addEventListener("mouseenter", e => { dica.innerHTML = texto; dica.classList.add("on"); mover(e); });
+  el.addEventListener("mousemove", mover);
+  el.addEventListener("mouseleave", () => dica.classList.remove("on"));
+  function mover(e){
+    const m = 14;
+    let x = e.clientX + m, y = e.clientY + m;
+    const c = dica.getBoundingClientRect();
+    if (x + c.width  > innerWidth  - 8) x = e.clientX - c.width  - m;
+    if (y + c.height > innerHeight - 8) y = e.clientY - c.height - m;
+    dica.style.left = x + "px"; dica.style.top = y + "px";
+  }
+}
+function svgEl(tag, attrs){
+  const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+/* =========================================================================
+   GRÁFICOS
+   ========================================================================= */
+
+/* Barras horizontais: categoria à esquerda, valor rotulado no fim da barra. */
+function barrasH(dados, opc){
+  const o = Object.assign({ cor: CORES[0], sufixo:"", largRot: 210, altura: 30, max: null }, opc||{});
+  if (!dados.length) return vazio();
+  const n = dados.length, alt = n*o.altura + 12;
+  const larg = 760, x0 = o.largRot, faixa = larg - x0 - 54;
+  const max = o.max || Math.max(...dados.map(d => d.valor), 1);
+
+  const svg = svgEl("svg", {viewBox:`0 0 ${larg} ${alt}`, role:"img", preserveAspectRatio:"xMidYMid meet"});
+  dados.forEach((d, i) => {
+    const y = i*o.altura + 4, h = o.altura - 11;
+    const w = Math.max(2, d.valor/max*faixa);
+    const cor = d.cor || o.cor;
+
+    const rot = svgEl("text", {x:0, y:y+h/2+4, class:"rot-cat"});
+    rot.textContent = d.rotulo.length > 44 ? d.rotulo.slice(0,43) + "…" : d.rotulo;
+    svg.appendChild(rot);
+
+    svg.appendChild(svgEl("rect", {x:x0, y, width:faixa, height:h, rx:4, fill:"var(--grade)", opacity:.45}));
+    const barra = svgEl("rect", {x:x0, y, width:w, height:h, rx:4, fill:cor, class:"marca-barra"});
+    svg.appendChild(barra);
+    ligarDica(barra, `<strong>${esc(d.rotulo)}</strong><br>${fmt(d.valor)}${o.sufixo}` + (d.extra ? "<br>"+esc(d.extra) : ""));
+
+    const v = svgEl("text", {x:x0+w+8, y:y+h/2+4, class:"rot-valor"});
+    v.textContent = fmt(d.valor) + o.sufixo;
+    svg.appendChild(v);
+  });
+  return svg;
+}
+
+/* Barras 100% empilhadas — distribuição de alternativas de uma pergunta. */
+function empilhada(partes, total){
+  const larg = 760, alt = 34;
+  const svg = svgEl("svg", {viewBox:`0 0 ${larg} ${alt}`, preserveAspectRatio:"none"});
+  let x = 0;
+  partes.forEach((p, i) => {
+    const w = p.valor/total*larg;
+    if (w <= 0) return;
+    const g = svgEl("rect", {x, y:0, width:Math.max(0, w-2), height:22, rx:4, fill:p.cor, class:"marca-barra"});
+    svg.appendChild(g);
+    ligarDica(g, `<strong>${esc(p.rotulo)}</strong><br>${fmt(p.valor)} de ${fmt(total)} · ${pct(p.valor,total)}%`);
+    if (w > 42){
+      const t = svgEl("text", {x:x+w/2-1, y:15, "text-anchor":"middle", style:"font-size:11.5px;font-weight:700;fill:#fff"});
+      t.textContent = pct(p.valor,total) + "%";
+      svg.appendChild(t);
+    }
+    x += w;
+  });
+  return svg;
+}
+
+/* Série temporal, duas linhas, com marcadores e tooltip por ponto. */
+function linhas(series, dias){
+  if (!dias.length) return vazio();
+  const larg = 760, alt = 210, m = {t:12, r:14, b:26, l:36};
+  const w = larg - m.l - m.r, h = alt - m.t - m.b;
+  const max = Math.max(1, ...series.flatMap(s => s.pontos));
+  const px = i => m.l + (dias.length === 1 ? w/2 : i/(dias.length-1)*w);
+  const py = v => m.t + h - v/max*h;
+
+  const svg = svgEl("svg", {viewBox:`0 0 ${larg} ${alt}`, preserveAspectRatio:"xMidYMid meet"});
+  const passo = max <= 4 ? 1 : Math.ceil(max/4);
+  for (let v = 0; v <= max; v += passo){
+    svg.appendChild(svgEl("line", {x1:m.l, x2:larg-m.r, y1:py(v), y2:py(v), class:"linha-grade"}));
+    const t = svgEl("text", {x:m.l-8, y:py(v)+4, "text-anchor":"end", class:"rot-eixo"});
+    t.textContent = v; svg.appendChild(t);
+  }
+  const salto = Math.max(1, Math.ceil(dias.length/6));
+  dias.forEach((d, i) => {
+    if (i % salto && i !== dias.length-1) return;
+    const t = svgEl("text", {x:px(i), y:alt-6, "text-anchor":"middle", class:"rot-eixo"});
+    t.textContent = d.slice(8,10) + "/" + d.slice(5,7);
+    svg.appendChild(t);
+  });
+
+  series.forEach(s => {
+    const d = s.pontos.map((v,i) => (i?"L":"M") + px(i) + " " + py(v)).join(" ");
+    svg.appendChild(svgEl("path", {d, fill:"none", stroke:s.cor, "stroke-width":2, "stroke-linejoin":"round", "stroke-linecap":"round"}));
+    s.pontos.forEach((v,i) => {
+      const c = svgEl("circle", {cx:px(i), cy:py(v), r:4.5, fill:s.cor, stroke:"var(--cartao)", "stroke-width":2});
+      svg.appendChild(c);
+      ligarDica(c, `<strong>${d3(dias[i])}</strong><br>${s.nome}: ${fmt(v)}`);
+    });
+  });
+  return svg;
+}
+const d3 = iso => iso.slice(8,10)+"/"+iso.slice(5,7)+"/"+iso.slice(0,4);
+
+/* Colunas — histograma de acertos. */
+function colunas(dados, cor){
+  if (!dados.length) return vazio();
+  const larg = 760, alt = 190, m = {t:22, r:10, b:42, l:10};
+  const w = larg - m.l - m.r, h = alt - m.t - m.b;
+  const max = Math.max(1, ...dados.map(d => d.valor));
+  const cw = w/dados.length;
+  const svg = svgEl("svg", {viewBox:`0 0 ${larg} ${alt}`, preserveAspectRatio:"xMidYMid meet"});
+  svg.appendChild(svgEl("line", {x1:m.l, x2:larg-m.r, y1:m.t+h, y2:m.t+h, class:"linha-eixo"}));
+  dados.forEach((d, i) => {
+    const bw = Math.min(88, cw-14), x = m.l + i*cw + (cw-bw)/2;
+    const bh = Math.max(2, d.valor/max*h);
+    const r = svgEl("rect", {x, y:m.t+h-bh, width:bw, height:bh, rx:4, fill:cor, class:"marca-barra"});
+    svg.appendChild(r);
+    ligarDica(r, `<strong>${esc(d.rotulo)}</strong><br>${fmt(d.valor)} participantes · ${d.pct}%`);
+    const v = svgEl("text", {x:x+bw/2, y:m.t+h-bh-7, "text-anchor":"middle", class:"rot-valor"});
+    v.textContent = fmt(d.valor); svg.appendChild(v);
+    const c = svgEl("text", {x:x+bw/2, y:m.t+h+18, "text-anchor":"middle", class:"rot-cat"});
+    c.textContent = d.rotulo; svg.appendChild(c);
+    const p = svgEl("text", {x:x+bw/2, y:m.t+h+33, "text-anchor":"middle", class:"rot-eixo"});
+    p.textContent = d.pct + "%"; svg.appendChild(p);
+  });
+  return svg;
+}
+function vazio(){
+  const d = document.createElement("div");
+  d.className = "vazio"; d.textContent = "Sem dados para este filtro.";
+  return d;
+}
+function legendaCores(itens){
+  const d = document.createElement("div");
+  d.className = "legenda-cores";
+  d.innerHTML = itens.map(i => `<span><i style="background:${i.cor}"></i>${esc(i.rotulo)}</span>`).join("");
+  return d;
+}
+function cartao(titulo, sub, corpo){
+  const c = document.createElement("div");
+  c.className = "cartao";
+  c.innerHTML = `<h3>${esc(titulo)}</h3>` + (sub ? `<div class="sub">${esc(sub)}</div>` : "");
+  if (corpo) c.appendChild(corpo);
+  return c;
+}
+
+/* =========================================================================
+   ABA 1 — VISÃO GERAL
+   ========================================================================= */
+function abaVisao(){
+  const box = document.createElement("div");
+  const R = rua(), C = clinica(), T = todas();
+  const comContato = T.filter(r => r.contato);
+  const optin = T.filter(r => r.aceita_dicas === true);
+  const tempos = T.map(r => r.duracao_seg).filter(Boolean);
+  const media = tempos.length ? Math.round(tempos.reduce((a,b)=>a+b,0)/tempos.length) : null;
+
+  box.appendChild(kpis([
+    {rot:"Respostas no total", num:fmt(T.length), pe:`${fmt(R.length)} na rua · ${fmt(C.length)} em clínica`},
+    {rot:"Contatos coletados", num:fmt(comContato.length), pe:`${pct(comContato.length, T.length)}% de quem respondeu`},
+    {rot:"Aceitaram receber dicas", num:fmt(optin.length), pe:`${pct(optin.length, comContato.length)}% de quem deixou contato`},
+    {rot:"Tempo médio de resposta", num: media ? media+"s" : "—", pe:"do início ao envio"},
+    {rot:"Locais e pontos ativos", num:fmt(new Set(T.map(r=>r.ponto_codigo||r.local_codigo).filter(Boolean)).size), pe:"com ao menos uma resposta"}
+  ]));
+
+  // série temporal
+  const dias = [...new Set(T.map(r => diaISO(r.criado_em)))].sort();
+  const serieR = dias.map(d => R.filter(r => diaISO(r.criado_em) === d).length);
+  const serieC = dias.map(d => C.filter(r => diaISO(r.criado_em) === d).length);
+  const g1 = cartao("Respostas por dia", "Quando a coleta aconteceu, separada por canal.",
+    linhas([{nome:"Rua", cor:COR_RUA, pontos:serieR}, {nome:"Clínica", cor:COR_CLI, pontos:serieC}], dias));
+  g1.appendChild(legendaCores([{rotulo:"Rua", cor:COR_RUA},{rotulo:"Clínica e petshop", cor:COR_CLI}]));
+
+  // desempenho por origem
+  const porOrigem = {};
+  T.forEach(r => {
+    const cod = r.ponto_codigo || r.local_codigo || "(sem código)";
+    if (!porOrigem[cod]) porOrigem[cod] = {n:0, canal:r.canal};
+    porOrigem[cod].n++;
+  });
+  const dadosOrigem = Object.entries(porOrigem)
+    .map(([cod, v]) => ({rotulo: nomeLocal(cod), valor: v.n, cor: v.canal === "rua" ? COR_RUA : COR_CLI}))
+    .sort((a,b) => b.valor - a.valor).slice(0, 12);
+  const g2 = cartao("Respostas por local de coleta",
+    "Quais clínicas e pontos de rua mais renderam. Útil para decidir onde manter o QR Code.",
+    barrasH(dadosOrigem, {sufixo:" respostas", largRot:230}));
+  g2.appendChild(legendaCores([{rotulo:"Rua", cor:COR_RUA},{rotulo:"Clínica e petshop", cor:COR_CLI}]));
+
+  // funil
+  const g3 = cartao("Onde as pessoas desistem",
+    "Sessões que alcançaram cada etapa, a partir de quem abriu o formulário.", funil());
+
+  const grade = document.createElement("div");
+  grade.className = "grade";
+  grade.style.marginTop = "18px";
+  grade.append(g1, g2, g3);
+  box.appendChild(grade);
+  return box;
+}
+
+function funil(){
+  const ev = S.dados.eventos || [];
+  if (!ev.length) return vazio();
+  const etapas = {};
+  ev.forEach(e => {
+    if (!etapas[e.etapa]) etapas[e.etapa] = {ordem:e.ordem, ses:new Set()};
+    etapas[e.etapa].ordem = Math.min(etapas[e.etapa].ordem, e.ordem);
+    etapas[e.etapa].ses.add(e.sessao_id);
+  });
+  const abriu = etapas["abriu"] ? etapas["abriu"].ses.size : 0;
+  const lista = Object.entries(etapas)
+    .sort((a,b) => a[1].ordem - b[1].ordem)
+    .map(([nome, v]) => ({
+      rotulo: rotuloEtapa(nome), valor: v.ses.size,
+      extra: abriu ? pct(v.ses.size, abriu) + "% de quem abriu" : "",
+      cor: nome === "concluiu" ? "var(--bom)" : CORES[0]
+    }));
+  return barrasH(lista, {sufixo:" sessões", largRot:190, max: abriu || null});
+}
+function rotuloEtapa(e){
+  const m = {abriu:"Abriu o formulário", concluiu:"Concluiu e enviou", nome:"Informou o nome",
+             contato:"Chegou no contato", consentimento:"Chegou na autorização", enviou:"Tocou em enviar"};
+  return m[e] || e.replace(/_/g," ").replace(/^q\d+ ?/,"Pergunta: ");
+}
+function nomeLocal(cod){
+  const l = (S.dados.locais||[]).find(x => x.codigo === cod);
+  if (l) return l.nome;
+  const p = (S.dados.pontos||[]).find(x => x.codigo === cod);
+  if (p) return p.nome;
+  return cod;
+}
+function kpis(itens){
+  const g = document.createElement("div");
+  g.className = "grade g-kpi";
+  g.innerHTML = itens.map(i => `
+    <div class="cartao kpi">
+      <div class="rot">${esc(i.rot)}</div>
+      <div class="num">${i.num}</div>
+      <div class="pe">${esc(i.pe)}</div>
+    </div>`).join("");
+  return g;
+}
+
+/* =========================================================================
+   ABA 2 — RUA (conhecimento, com gabarito)
+   ========================================================================= */
+function abaRua(){
+  const box = document.createElement("div");
+  const R = rua();
+  const qs = (S.dados.questoes||[]).filter(q => q.canal === "rua" && q.tipo === "escolha");
+  if (!R.length) { box.appendChild(vazio()); return box; }
+
+  const comQuiz = R.filter(r => r[qs[0]?.questao]);
+  const totalAcertos = comQuiz.reduce((s,r) => s + qs.filter(q => r[q.questao] === q.correta).length, 0);
+  const mediaAcertos = comQuiz.length ? (totalAcertos/comQuiz.length).toFixed(2) : "—";
+  const gabaritaram = comQuiz.filter(r => qs.every(q => r[q.questao] === q.correta)).length;
+  const naoSabe = comQuiz.reduce((s,r) => s + qs.filter(q => r[q.questao] === "d").length, 0);
+
+  box.appendChild(kpis([
+    {rot:"Participantes na rua", num:fmt(comQuiz.length), pe:"responderam as situações"},
+    {rot:"Média de acertos", num:mediaAcertos + " / " + qs.length, pe:`${pct(totalAcertos, comQuiz.length*qs.length)}% de acerto geral`},
+    {rot:"Acertaram tudo", num:fmt(gabaritaram), pe:`${pct(gabaritaram, comQuiz.length)}% dos participantes`},
+    {rot:"Respostas “não sei”", num:fmt(naoSabe), pe:`${pct(naoSabe, comQuiz.length*qs.length)}% do total de respostas`}
+  ]));
+
+  // acerto por questão
+  const dadosAcerto = qs.map((q, i) => {
+    const resp = comQuiz.filter(r => r[q.questao]);
+    const ac = resp.filter(r => r[q.questao] === q.correta).length;
+    return {rotulo: q.rotulo || q.questao, valor: pct(ac, resp.length), sufixo:"%",
+            extra: `${ac} de ${resp.length} acertaram`, cor: CORES[0]};
+  });
+  const g1 = cartao("Taxa de acerto por situação",
+    "Percentual de participantes que marcaram a alternativa correta. Quanto menor a barra, mais a situação merece virar conteúdo da ação de extensão.",
+    barrasH(dadosAcerto, {sufixo:"%", largRot:150, max:100}));
+
+  const grade = document.createElement("div");
+  grade.className = "grade"; grade.style.marginTop = "18px";
+  grade.appendChild(g1);
+
+  // histograma
+  const hist = [];
+  for (let k = 0; k <= qs.length; k++){
+    const n = comQuiz.filter(r => qs.filter(q => r[q.questao] === q.correta).length === k).length;
+    hist.push({rotulo: k + (k === 1 ? " acerto" : " acertos"), valor:n, pct:pct(n, comQuiz.length)});
+  }
+  grade.appendChild(cartao("Distribuição da pontuação",
+    "Quantos participantes ficaram em cada faixa de acertos.", colunas(hist, CORES[0])));
+  box.appendChild(grade);
+
+  // distribuição por questão
+  const t = document.createElement("h2");
+  t.className = "titulo"; t.textContent = "O que marcaram em cada situação";
+  const p = document.createElement("p");
+  p.className = "legenda";
+  p.textContent = "A alternativa correta aparece marcada. Ver para onde vai o erro diz mais do que a taxa de acerto sozinha.";
+  box.append(t, p);
+
+  const gradeQ = document.createElement("div");
+  gradeQ.className = "grade";
+  qs.forEach(q => {
+    const resp = comQuiz.filter(r => r[q.questao]);
+    const ops = (S.dados.opcoes||[]).filter(o => o.canal === "rua" && o.questao === q.questao);
+    const partes = ops.map((o, i) => ({
+      rotulo: o.rotulo + (o.alternativa === q.correta ? "  (correta)" : ""),
+      valor: resp.filter(r => r[q.questao] === o.alternativa).length,
+      cor: o.alternativa === q.correta ? "var(--bom)" : CORES_ERRO[i % CORES_ERRO.length]
+    }));
+    const c = cartao(q.enunciado, `${fmt(resp.length)} respostas`, empilhada(partes, resp.length || 1));
+    c.appendChild(legendaCores(partes.map(x => ({rotulo:`${x.rotulo} — ${fmt(x.valor)}`, cor:x.cor}))));
+    gradeQ.appendChild(c);
+  });
+  box.appendChild(gradeQ);
+
+  // por ponto de coleta
+  const pontos = {};
+  comQuiz.forEach(r => {
+    const cod = r.ponto_codigo || "(sem código)";
+    if (!pontos[cod]) pontos[cod] = {ac:0, tot:0, n:0};
+    pontos[cod].n++;
+    qs.forEach(q => { if (r[q.questao]){ pontos[cod].tot++; if (r[q.questao] === q.correta) pontos[cod].ac++; } });
+  });
+  const dadosPonto = Object.entries(pontos)
+    .map(([cod,v]) => ({rotulo: nomeLocal(cod), valor: pct(v.ac, v.tot), extra:`${v.n} participantes`, cor:CORES[0]}))
+    .sort((a,b) => a.valor - b.valor);
+  const g4 = cartao("Acerto por ponto de coleta",
+    "Onde o conhecimento é menor — ou seja, onde a ação de extensão tem mais a contribuir.",
+    barrasH(dadosPonto, {sufixo:"%", largRot:200, max:100}));
+  const gradeP = document.createElement("div");
+  gradeP.className = "grade"; gradeP.style.marginTop = "18px";
+  gradeP.appendChild(g4);
+  box.appendChild(gradeP);
+  return box;
+}
+
+/* =========================================================================
+   ABA 3 — CLÍNICA (nutrição, sem gabarito)
+   ========================================================================= */
+function abaClinica(){
+  const box = document.createElement("div");
+  const C = clinica();
+  const qs = (S.dados.questoes||[]).filter(q => q.canal === "clinica" && q.tipo === "escolha");
+  const abertas = (S.dados.questoes||[]).filter(q => q.canal === "clinica" && q.tipo === "longo");
+  if (!C.length){ box.appendChild(vazio()); return box; }
+
+  const comResp = C.filter(r => qs.some(q => r[q.questao]));
+  const conta = (campo, vals) => comResp.filter(r => vals.includes(r[campo])).length;
+
+  box.appendChild(kpis([
+    {rot:"Participantes", num:fmt(comResp.length), pe:"responderam o bloco de alimentação"},
+    {rot:"Decidem pela indicação do vet", num:pct(conta("q1_escolha_racao",["b"]), comResp.length)+"%", pe:"critério principal de escolha da ração"},
+    {rot:"Porcionam sem critério", num:pct(conta("q2_medida_racao",["c","d"]), comResp.length)+"%", pe:"no olho ou comida à vontade"},
+    {rot:"Dieta complementada", num:pct(comResp.filter(r => r.q3_complemento && r.q3_complemento !== "a").length, comResp.length)+"%", pe:"algo além da ração"},
+    {rot:"Deixaram contato", num:pct(C.filter(r => r.contato).length, C.length)+"%", pe:"o WhatsApp é opcional neste canal"}
+  ]));
+
+  const t = document.createElement("h2");
+  t.className = "titulo"; t.textContent = "Perfil alimentar declarado";
+  const p = document.createElement("p");
+  p.className = "legenda";
+  p.textContent = "Distribuição de cada pergunta. É o material que vai para o relatório e para a devolutiva de cada clínica parceira.";
+  box.append(t, p);
+
+  const grade = document.createElement("div");
+  grade.className = "grade";
+  qs.forEach(q => {
+    const resp = comResp.filter(r => r[q.questao]);
+    const ops = (S.dados.opcoes||[]).filter(o => o.canal === "clinica" && o.questao === q.questao);
+    const dados = ops.map((o, i) => ({
+      rotulo: o.rotulo,
+      valor: resp.filter(r => r[q.questao] === o.alternativa).length,
+      cor: CORES[i % CORES.length]
+    })).sort((a,b) => b.valor - a.valor);
+    grade.appendChild(cartao(q.enunciado, `${fmt(resp.length)} respostas`,
+      barrasH(dados, {largRot:290, altura:32})));
+  });
+  box.appendChild(grade);
+
+  // cruzamento orientação x porcionamento
+  const gA = comResp.filter(r => r.q1_escolha_racao === "b");
+  const gB = comResp.filter(r => r.q1_escolha_racao && r.q1_escolha_racao !== "b");
+  const cruz = [
+    {rotulo:"Escolhe pela indicação do veterinário", valor: pct(gA.filter(r=>["a","b"].includes(r.q2_medida_racao)).length, gA.length), extra:`${gA.length} participantes`, cor:CORES[2]},
+    {rotulo:"Escolhe por outro critério",           valor: pct(gB.filter(r=>["a","b"].includes(r.q2_medida_racao)).length, gB.length), extra:`${gB.length} participantes`, cor:CORES[1]}
+  ];
+  const gC = cartao("Quem segue o veterinário porciona melhor?",
+    "Percentual que mede a ração pela embalagem ou em balança, nos dois grupos. É o cruzamento que sustenta a justificativa da ação de extensão.",
+    barrasH(cruz, {sufixo:"%", largRot:250, max:100}));
+  const g2 = document.createElement("div");
+  g2.className = "grade"; g2.style.marginTop = "18px";
+  g2.appendChild(gC);
+  box.appendChild(g2);
+
+  // dúvidas abertas
+  abertas.forEach(q => {
+    const lista = C.filter(r => r[q.questao] && r[q.questao].trim().length > 2);
+    const h = document.createElement("h2");
+    h.className = "titulo"; h.textContent = "Dúvidas escritas pelos tutores";
+    const sub = document.createElement("p");
+    sub.className = "legenda";
+    sub.textContent = `${fmt(lista.length)} pessoas escreveram uma dúvida (${pct(lista.length, C.length)}% de quem participou). Material qualitativo da pesquisa e pauta de conteúdo para as clínicas.`;
+    box.append(h, sub);
+
+    if (!lista.length){ box.appendChild(vazio()); return; }
+
+    // termos mais citados
+    const parada = new Set(["para","como","porque","quando","meu","minha","esta","este","isso","pode","posso","sobre","mais","muito","tenho","fazer","cachorro","gato","racao","ração","dele","dela","qual","melhor","devo","sempre","todo","dias","anos","que","com","uma","dar","ele","ela"]);
+    const cont = {};
+    lista.forEach(r => {
+      r[q.questao].toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"")
+        .split(/[^a-z0-9]+/).forEach(w => { if (w.length > 3 && !parada.has(w)) cont[w] = (cont[w]||0)+1; });
+    });
+    const termos = Object.entries(cont).filter(([,n]) => n > 1)
+      .sort((a,b) => b[1]-a[1]).slice(0,10)
+      .map(([w,n]) => ({rotulo:w, valor:n, cor:CORES[2]}));
+    if (termos.length){
+      const gt = document.createElement("div");
+      gt.className = "grade"; gt.style.marginBottom = "16px";
+      gt.appendChild(cartao("Termos mais citados nas dúvidas",
+        "Ranking simples de palavras, para achar os temas recorrentes.",
+        barrasH(termos, {sufixo:" menções", largRot:150})));
+      box.appendChild(gt);
+    }
+
+    const cx = document.createElement("div");
+    const LOTE = 15;
+    const pintarDuvidas = qtd => {
+      cx.innerHTML = "";
+      lista.slice(0, qtd).forEach(r => {
+        const d = document.createElement("div");
+        d.className = "duvida-item";
+        d.innerHTML = `<p>${esc(r[q.questao])}</p><div class="meta">${esc(nomeLocal(r.local_codigo||"—"))} · ${dataBR(r.criado_em)}</div>`;
+        cx.appendChild(d);
+      });
+      if (lista.length > qtd){
+        const b = document.createElement("button");
+        b.className = "chip";
+        b.textContent = `Mostrar mais ${Math.min(LOTE, lista.length-qtd)} de ${fmt(lista.length)}`;
+        b.onclick = () => pintarDuvidas(qtd + LOTE);
+        cx.appendChild(b);
+      }
+    };
+    pintarDuvidas(LOTE);
+    box.appendChild(cx);
+  });
+
+  return box;
+}
+
+/* =========================================================================
+   ABA 4 — RESPOSTAS INDIVIDUAIS (quem respondeu o que, e de onde veio)
+   ========================================================================= */
+let indBusca = "", indLocal = "", indPagina = 1, indAberta = null;
+const IND_POR_PAGINA = 25;
+
+function rotuloResposta(canal, questao, alternativa){
+  if (!alternativa) return null;
+  const o = (S.dados.opcoes||[]).find(x =>
+    x.canal === canal && x.questao === questao && x.alternativa === alternativa);
+  return o ? o.rotulo : alternativa;
+}
+
+function abaIndividuais(){
+  const box = document.createElement("div");
+  const qs = (S.dados.questoes||[]).filter(q => q.canal === "clinica");
+  const fechadas = qs.filter(q => q.tipo === "escolha");
+  const abertas  = qs.filter(q => q.tipo === "longo");
+
+  const barra = document.createElement("div");
+  barra.className = "filtros";
+  barra.innerHTML = `
+    <input class="busca" id="indBusca" placeholder="Buscar por nome, WhatsApp ou dúvida" value="${esc(indBusca)}">
+    <select class="sel-status" id="indLocal">
+      <option value="">Todas as clínicas</option>
+      ${(S.dados.locais||[]).slice().sort((a,b)=>(a.numero||99)-(b.numero||99))
+        .map(l => `<option value="${esc(l.codigo)}"${indLocal === l.codigo ? " selected":""}>${
+          l.numero ? "#" + l.numero + " · " : ""}${esc(l.nome)}</option>`).join("")}
+    </select>
+    <button class="chip" id="btnCsvIndiv" style="margin-left:auto">Baixar respostas em CSV</button>`;
+  box.appendChild(barra);
+
+  let lista = S.dados.clinica.filter(r => fechadas.some(q => r[q.questao]) || r.q5_duvida);
+  if (indLocal) lista = lista.filter(r => r.local_codigo === indLocal);
+  if (indBusca.trim()){
+    const q = indBusca.trim().toLowerCase();
+    const qn = q.replace(/\D/g,"");
+    lista = lista.filter(r =>
+      (r.nome||"").toLowerCase().includes(q) ||
+      (r.q5_duvida||"").toLowerCase().includes(q) ||
+      (qn.length >= 3 && (r.contato||"").replace(/\D/g,"").includes(qn)));
+  }
+
+  const nota = document.createElement("p");
+  nota.className = "legenda";
+  nota.textContent = `${fmt(lista.length)} participante(s). Clique em qualquer linha para ver a resposta completa.`;
+  box.appendChild(nota);
+
+  if (indAberta){
+    const r = lista.find(x => x.id === indAberta);
+    if (r) box.appendChild(detalheParticipante(r, fechadas, abertas));
+  }
+
+  if (!lista.length){ box.appendChild(vazio()); return box; }
+
+  const paginas = Math.max(1, Math.ceil(lista.length / IND_POR_PAGINA));
+  if (indPagina > paginas) indPagina = paginas;
+  const inicio = (indPagina - 1) * IND_POR_PAGINA;
+  const pagina = lista.slice(inicio, inicio + IND_POR_PAGINA);
+
+  const rolo = document.createElement("div");
+  rolo.className = "tab-rolo";
+  rolo.innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Participante</th><th>Clínica</th><th>Data</th>
+        ${fechadas.map(q => `<th>${esc(q.rotulo || q.questao)}</th>`).join("")}
+        <th>Dúvida</th>
+      </tr></thead>
+      <tbody>${pagina.map(r => linhaIndividual(r, fechadas)).join("")}</tbody>
+    </table>`;
+  box.appendChild(rolo);
+
+  if (lista.length > IND_POR_PAGINA){
+    const nav = document.createElement("div");
+    nav.className = "paginacao";
+    nav.innerHTML = `
+      <button class="chip js-ipag" data-p="${indPagina-1}" ${indPagina === 1 ? "disabled" : ""}>Anterior</button>
+      <span>${inicio+1}–${Math.min(inicio+IND_POR_PAGINA, lista.length)} de ${fmt(lista.length)}</span>
+      <button class="chip js-ipag" data-p="${indPagina+1}" ${indPagina === paginas ? "disabled" : ""}>Próxima</button>`;
+    box.appendChild(nav);
+  }
+
+  return box;
+}
+
+function nomeClinica(cod){
+  const l = (S.dados.locais||[]).find(x => x.codigo === cod);
+  if (!l) return cod || "—";
+  return (l.numero ? "#" + l.numero + " " : "") + l.nome;
+}
+
+function linhaIndividual(r, fechadas){
+  const curto = t => !t ? '<span style="color:var(--tinta3)">—</span>'
+                        : esc(t.length > 34 ? t.slice(0,33) + "…" : t);
+  const aberta = indAberta === r.id;
+  return `<tr class="js-ind${aberta ? " aberta" : ""}" data-id="${r.id}" style="cursor:pointer">
+    <td><strong>${esc(r.nome)}</strong>${r.contato ? `<br><span style="font-size:12px;color:var(--tinta3)">${esc(r.contato)}</span>` : ""}</td>
+    <td>${esc(nomeClinica(r.local_codigo))}</td>
+    <td style="white-space:nowrap">${dataBR(r.criado_em)}</td>
+    ${fechadas.map(q => `<td>${curto(rotuloResposta("clinica", q.questao, r[q.questao]))}</td>`).join("")}
+    <td>${curto(r.q5_duvida)}</td>
+  </tr>`;
+}
+
+function detalheParticipante(r, fechadas, abertas){
+  const l = (S.dados.locais||[]).find(x => x.codigo === r.local_codigo) || {};
+  const c = document.createElement("div");
+  c.className = "cartao";
+  c.style.margin = "0 0 16px";
+  c.style.borderLeft = "3px solid var(--c3)";
+  c.innerHTML = `
+    <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:14px">
+      <div>
+        <h3 style="font-size:17px">${esc(r.nome)}</h3>
+        <div class="sub" style="margin:4px 0 0">
+          ${esc(nomeClinica(r.local_codigo))}${l.responsavel_equipe ? " · responsável: " + esc(l.responsavel_equipe) : ""}
+          · ${dataBR(r.criado_em)}${r.duracao_seg ? " · respondeu em " + r.duracao_seg + "s" : ""}
+        </div>
+      </div>
+      <button class="mini js-fechar-det" style="margin-left:auto">Fechar</button>
+    </div>
+    <div style="display:grid;gap:11px">
+      ${fechadas.map(q => `
+        <div>
+          <div style="font-size:12.5px;color:var(--tinta2);margin-bottom:3px">${esc(q.enunciado)}</div>
+          <div style="font-size:14.5px;font-weight:600">${
+            esc(rotuloResposta("clinica", q.questao, r[q.questao]) || "Não respondeu")}</div>
+        </div>`).join("")}
+      ${abertas.map(q => `
+        <div>
+          <div style="font-size:12.5px;color:var(--tinta2);margin-bottom:3px">${esc(q.enunciado)}</div>
+          <div style="font-size:14.5px;font-weight:600">${esc(r[q.questao] || "Não escreveu nada")}</div>
+        </div>`).join("")}
+      <div>
+        <div style="font-size:12.5px;color:var(--tinta2);margin-bottom:3px">Contato e consentimento</div>
+        <div style="font-size:14.5px;font-weight:600">
+          ${r.contato ? esc(r.contato) : "Não informou WhatsApp"} ·
+          ${r.aceita_dicas === true ? "quer receber dicas" : r.aceita_dicas === false ? "não quer dicas" : "não foi perguntado"} ·
+          ${r.consentimento ? "autorizou o uso dos dados" : "sem autorização"}
+        </div>
+      </div>
+    </div>`;
+  return c;
+}
+
+function csvIndividuais(){
+  const qs = (S.dados.questoes||[]).filter(q => q.canal === "clinica");
+  const fechadas = qs.filter(q => q.tipo === "escolha");
+  const cab = ["data","clinica_numero","clinica","responsavel_equipe","participante","whatsapp",
+               "quer_dicas", ...fechadas.map(q => q.rotulo || q.questao), "duvida","duracao_seg","status"];
+  const linhas = S.dados.clinica.map(r => {
+    const l = (S.dados.locais||[]).find(x => x.codigo === r.local_codigo) || {};
+    return [new Date(r.criado_em).toLocaleString("pt-BR"), l.numero || "", l.nome || "",
+            l.responsavel_equipe || "", r.nome, r.contato || "",
+            r.aceita_dicas === true ? "sim" : r.aceita_dicas === false ? "nao" : "",
+            ...fechadas.map(q => rotuloResposta("clinica", q.questao, r[q.questao]) || ""),
+            r.q5_duvida || "", r.duracao_seg || "", STATUS[r.status_crm||"novo"]];
+  });
+  baixarCSV("respostas-individuais.csv", [cab, ...linhas]);
+}
+
+/* =========================================================================
+   ABA 5 — CONTATOS (CRM)
+   ========================================================================= */
+let crmBusca = "", crmStatus = "", crmCanal = "", crmPagina = 1;
+const POR_PAGINA = 50;
+
+function abaLeads(){
+  const box = document.createElement("div");
+  const leads = todas().filter(r => r.contato);
+
+  const barra = document.createElement("div");
+  barra.className = "filtros";
+  barra.innerHTML = `
+    <input class="busca" id="crmBusca" placeholder="Buscar por nome ou número" value="${esc(crmBusca)}">
+    <select class="sel-status" id="crmCanal">
+      <option value="">Todos os canais</option>
+      <option value="rua">Rua</option>
+      <option value="clinica">Clínica</option>
+    </select>
+    <select class="sel-status" id="crmStatus">
+      <option value="">Todos os status</option>
+      ${Object.entries(STATUS).map(([k,v]) => `<option value="${k}">${v}</option>`).join("")}
+    </select>
+    <button class="chip" id="btnCsvLeads" style="margin-left:auto">Baixar contatos em CSV</button>`;
+  box.appendChild(barra);
+
+  const filtrados = leads.filter(r => {
+    if (crmCanal && r.canal !== crmCanal) return false;
+    if (crmStatus && (r.status_crm || "novo") !== crmStatus) return false;
+    if (crmBusca.trim()){
+      const q  = crmBusca.trim().toLowerCase();
+      const qn = q.replace(/\D/g,"");
+      const num = (r.contato||"").replace(/\D/g,"");
+      const casaNome   = (r.nome||"").toLowerCase().includes(q);
+      const casaNumero = qn.length >= 3 && num.includes(qn);   // sem digitos, nao vale como busca
+      if (!casaNome && !casaNumero) return false;
+    }
+    return true;
+  });
+
+  const porStatus = {};
+  leads.forEach(r => { const s = r.status_crm || "novo"; porStatus[s] = (porStatus[s]||0)+1; });
+  box.appendChild(kpis([
+    {rot:"Contatos na lista", num:fmt(leads.length), pe:`${fmt(filtrados.length)} com o filtro atual`},
+    {rot:"Ainda não contatados", num:fmt(porStatus.novo||0), pe:"status “novo”"},
+    {rot:"Já contatados", num:fmt((porStatus.contatado||0)+(porStatus.respondeu||0)), pe:`${fmt(porStatus.respondeu||0)} responderam`},
+    {rot:"Querem receber dicas", num:fmt(leads.filter(r=>r.aceita_dicas===true).length), pe:"autorizaram o envio de conteúdo"}
+  ]));
+
+  const paginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
+  if (crmPagina > paginas) crmPagina = paginas;
+  const inicio = (crmPagina - 1) * POR_PAGINA;
+  const pagina = filtrados.slice(inicio, inicio + POR_PAGINA);
+
+  const rolo = document.createElement("div");
+  rolo.className = "tab-rolo";
+  rolo.style.marginTop = "18px";
+  if (!filtrados.length){
+    rolo.appendChild(vazio());
+  } else {
+    rolo.innerHTML = `
+      <table>
+        <thead><tr>
+          <th>Nome</th><th>WhatsApp</th><th>Canal</th><th>Origem</th>
+          <th>Data</th><th>Dicas</th><th>Status</th><th>Observação</th><th></th>
+        </tr></thead>
+        <tbody>${pagina.map(linhaLead).join("")}</tbody>
+      </table>`;
+  }
+  box.appendChild(rolo);
+
+  if (filtrados.length > POR_PAGINA){
+    const nav = document.createElement("div");
+    nav.className = "paginacao";
+    nav.innerHTML = `
+      <button class="chip js-pag" data-p="${crmPagina-1}" ${crmPagina === 1 ? "disabled" : ""}>Anterior</button>
+      <span>${inicio+1}–${Math.min(inicio+POR_PAGINA, filtrados.length)} de ${fmt(filtrados.length)}</span>
+      <button class="chip js-pag" data-p="${crmPagina+1}" ${crmPagina === paginas ? "disabled" : ""}>Próxima</button>`;
+    box.appendChild(nav);
+  }
+  return box;
+}
+
+function linhaLead(r){
+  const num = (r.contato||"").replace(/\D/g,"");
+  const zap = "https://wa.me/55" + num + "?text=" + encodeURIComponent(
+    `Olá, ${(r.nome||"").split(" ")[0]}! Aqui é da equipe do projeto de extensão em Medicina Veterinária. Você participou da nossa pesquisa e autorizou receber dicas de cuidado para o seu pet.`);
+  return `<tr data-id="${r.id}" data-canal="${r.canal}">
+    <td><strong>${esc(r.nome)}</strong></td>
+    <td style="font-variant-numeric:tabular-nums">${esc(r.contato)}</td>
+    <td><span class="tag ${r.canal}">${r.canal === "rua" ? "Rua" : "Clínica"}</span></td>
+    <td>${esc(nomeLocal(r.ponto_codigo || r.local_codigo || "—"))}</td>
+    <td style="white-space:nowrap">${dataBR(r.criado_em)}</td>
+    <td>${r.aceita_dicas === true ? "Sim" : r.aceita_dicas === false ? "Não" : "—"}</td>
+    <td><select class="sel-status js-status">${
+      Object.entries(STATUS).map(([k,v]) =>
+        `<option value="${k}"${(r.status_crm||"novo") === k ? " selected":""}>${v}</option>`).join("")
+    }</select></td>
+    <td><input class="obs js-obs" value="${esc(r.obs_crm||"")}" placeholder="anotação"></td>
+    <td>${num.length >= 10 ? `<a class="zap" href="${zap}" target="_blank" rel="noopener">WhatsApp</a>` : ""}</td>
+  </tr>`;
+}
+
+async function gravarLead(id, canal, campos){
+  const tabela = canal === "rua" ? "pesquisa_respostas_rua" : "pesquisa_respostas_clinica";
+  const alvo = (canal === "rua" ? S.dados.rua : S.dados.clinica).find(x => x.id === id);
+  if (alvo) Object.assign(alvo, campos);
+  if (S.demo) return;
+  try{ await api(`${tabela}?id=eq.${id}`, {metodo:"PATCH", corpo:campos}); }
+  catch(e){ alert("Não foi possível salvar: " + e.message); }
+}
+
+/* =========================================================================
+   CSV
+   ========================================================================= */
+function baixarCSV(nome, linhas){
+  const csv = linhas.map(l => l.map(c => {
+    const s = (c === null || c === undefined) ? "" : String(c);
+    return /[";\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+  }).join(";")).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["﻿"+csv], {type:"text/csv;charset=utf-8"}));
+  a.download = nome;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+}
+function csvLeads(){
+  const L = todas().filter(r => r.contato);
+  baixarCSV("contatos-pesquisa.csv", [
+    ["nome","whatsapp","canal","origem","data","aceita_dicas","status","observacao"],
+    ...L.map(r => [r.nome, r.contato, r.canal, nomeLocal(r.ponto_codigo||r.local_codigo||""),
+                   dataBR(r.criado_em), r.aceita_dicas === true ? "sim" : r.aceita_dicas === false ? "nao" : "",
+                   STATUS[r.status_crm||"novo"], r.obs_crm||""])
+  ]);
+}
+function csvCompleto(){
+  const qsR = (S.dados.questoes||[]).filter(q => q.canal === "rua");
+  const qsC = (S.dados.questoes||[]).filter(q => q.canal === "clinica");
+  const cab = ["id","canal","data","nome","contato","aceita_dicas","consentimento","origem",
+               "duracao_seg","dispositivo","status","observacao",
+               ...qsR.map(q=>q.questao), "acertos", ...qsC.map(q=>q.questao)];
+  const linha = r => [
+    r.id, r.canal, new Date(r.criado_em).toLocaleString("pt-BR"), r.nome, r.contato,
+    r.aceita_dicas === true ? "sim" : r.aceita_dicas === false ? "nao" : "",
+    r.consentimento ? "sim" : "nao", r.ponto_codigo || r.local_codigo || "",
+    r.duracao_seg, r.dispositivo, STATUS[r.status_crm||"novo"], r.obs_crm || "",
+    ...qsR.map(q => r[q.questao] ?? ""), r.acertos ?? "", ...qsC.map(q => r[q.questao] ?? "")
+  ];
+  baixarCSV("respostas-pesquisa.csv", [cab, ...todas().map(linha)]);
+}
+
+/* =========================================================================
+   RENDER E EVENTOS
+   ========================================================================= */
+function render(){
+  const alvo = document.getElementById("conteudo");
+  alvo.innerHTML = "";
+  const mapa = {visao:abaVisao, rua:abaRua, clinica:abaClinica,
+                individuais:abaIndividuais, leads:abaLeads};
+  try{ alvo.appendChild(mapa[S.aba]()); }
+  catch(e){ alvo.innerHTML = `<div class="vazio">Não foi possível montar esta aba: ${esc(e.message)}</div>`; }
+  document.getElementById("filtros").style.display =
+    (S.aba === "leads" || S.aba === "individuais") ? "none" : "";
+}
+
+function preencherLocais(){
+  const s = document.getElementById("filtroLocal");
+  const opts = [...(S.dados.pontos||[]).map(p => ["Rua · " + p.nome, p.codigo]),
+                ...(S.dados.locais||[]).map(l => ["Clínica · " + l.nome, l.codigo])];
+  s.innerHTML = `<option value="">Todos os locais e pontos</option>` +
+    opts.map(([n,c]) => `<option value="${esc(c)}">${esc(n)}</option>`).join("");
+}
+
+document.querySelectorAll(".aba").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".aba").forEach(x => x.classList.remove("on"));
+  b.classList.add("on"); S.aba = b.dataset.aba; render();
+}));
+document.getElementById("filtros").addEventListener("click", e => {
+  const c = e.target.closest("[data-per]");
+  if (!c) return;
+  document.querySelectorAll("[data-per]").forEach(x => x.classList.remove("on"));
+  c.classList.add("on"); S.periodo = +c.dataset.per; render();
+});
+document.getElementById("filtroLocal").addEventListener("change", e => { S.local = e.target.value; render(); });
+document.getElementById("btnCsvTudo").addEventListener("click", csvCompleto);
+
+document.getElementById("conteudo").addEventListener("change", e => {
+  const tr = e.target.closest("tr[data-id]");
+  if (tr && e.target.classList.contains("js-status"))
+    gravarLead(tr.dataset.id, tr.dataset.canal, {status_crm: e.target.value});
+  if (e.target.id === "crmCanal"){ crmCanal = e.target.value; crmPagina = 1; render(); }
+  if (e.target.id === "crmStatus"){ crmStatus = e.target.value; crmPagina = 1; render(); }
+  if (e.target.id === "indLocal"){ indLocal = e.target.value; indPagina = 1; indAberta = null; render(); }
+});
+document.getElementById("conteudo").addEventListener("blur", e => {
+  const tr = e.target.closest("tr[data-id]");
+  if (tr && e.target.classList.contains("js-obs"))
+    gravarLead(tr.dataset.id, tr.dataset.canal, {obs_crm: e.target.value || null});
+}, true);
+document.getElementById("conteudo").addEventListener("click", e => {
+  if (e.target.id === "btnCsvLeads") csvLeads();
+  if (e.target.id === "btnCsvIndiv") csvIndividuais();
+  const ip = e.target.closest(".js-ipag");
+  if (ip && !ip.disabled){ indPagina = +ip.dataset.p; indAberta = null; render(); scrollTo({top:0, behavior:"smooth"}); }
+  if (e.target.closest(".js-fechar-det")){ indAberta = null; render(); return; }
+  const li = e.target.closest(".js-ind");
+  if (li){
+    indAberta = (indAberta === li.dataset.id) ? null : li.dataset.id;
+    render();
+    if (indAberta){
+      const det = document.querySelector("#conteudo .cartao[style*='border-left']");
+      if (det) det.scrollIntoView({behavior:"smooth", block:"center"});
+    }
+  }
+  const pg = e.target.closest(".js-pag");
+  if (pg && !pg.disabled){ crmPagina = +pg.dataset.p; render(); scrollTo({top:0, behavior:"smooth"}); }
+});
+let tBusca;
+document.getElementById("conteudo").addEventListener("input", e => {
+  const alvo = e.target.id;
+  if (alvo !== "crmBusca" && alvo !== "indBusca") return;
+  clearTimeout(tBusca);
+  const v = e.target.value;
+  tBusca = setTimeout(() => {
+    if (alvo === "crmBusca"){ crmBusca = v; crmPagina = 1; }
+    else { indBusca = v; indPagina = 1; indAberta = null; }
+    render();
+    const c = document.getElementById(alvo);
+    if (c){ c.focus(); c.setSelectionRange(c.value.length, c.value.length); }
+  }, 280);
+});
+
+document.getElementById("btnTema").addEventListener("click", () => {
+  const atual = document.documentElement.getAttribute("data-tema");
+  const novo = atual === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-tema", novo);
+  try{ localStorage.setItem("painel_tema", novo); }catch(x){}
+  render();
+});
+document.getElementById("btnAtualizar").addEventListener("click", async () => {
+  document.getElementById("conteudo").innerHTML = '<div class="carregando">Atualizando…</div>';
+  await carregar(); preencherLocais(); render();
+});
+document.getElementById("btnSair").addEventListener("click", sair);
+function sair(){
+  limparSessao(); S.token = null; S.demo = false;
+  document.getElementById("app").hidden = true;
+  document.getElementById("telaLogin").hidden = false;
+}
+
+document.getElementById("formLogin").addEventListener("submit", async e => {
+  e.preventDefault();
+  const b = document.getElementById("btnEntrar"), err = document.getElementById("erroLogin");
+  b.disabled = true; b.textContent = "Entrando…"; err.hidden = true;
+  try{
+    S.token = await entrar(document.getElementById("email").value.trim(),
+                           document.getElementById("senha").value);
+    salvarSessao(S.token, document.getElementById("email").value.trim());
+    S.demo = false;
+    await abrirPainel();
+  }catch(x){
+    err.textContent = x.message; err.hidden = false;
+    b.disabled = false; b.textContent = "Entrar";
+  }
+});
+document.getElementById("btnDemo").addEventListener("click", async () => {
+  S.demo = true; S.token = null;
+  await abrirPainel();
+});
+
+async function abrirPainel(){
+  document.getElementById("telaLogin").hidden = true;
+  document.getElementById("app").hidden = false;
+  document.getElementById("avisoDemo").hidden = !S.demo;
+  document.getElementById("conteudo").innerHTML = '<div class="carregando">Carregando dados…</div>';
+  try{
+    await carregar();
+    preencherLocais();
+    const temRua = (S.dados.rua || []).length > 0;
+    document.querySelector('.aba[data-aba="rua"]').hidden = !temRua;
+    if (!temRua && S.aba === "rua") S.aba = "visao";
+    render();
+  }catch(e){
+    document.getElementById("conteudo").innerHTML =
+      `<div class="vazio">Não foi possível carregar: ${esc(e.message)}<br><br>
+       Confira se os arquivos SQL foram executados e se o usuário tem acesso.</div>`;
+  }
+}
+
+/* =========================================================================
+   DADOS DE DEMONSTRAÇÃO
+   ========================================================================= */
+function gerarDemo(){
+  const locais = [
+    {codigo:"clinica-01", numero:1, nome:"Chamego Clínica Veterinária", bairro:"Centro",  responsavel_equipe:"Wendell"},
+    {codigo:"clinica-02", numero:2, nome:"Petshop do Bairro",           bairro:"Jardins", responsavel_equipe:"Maria"},
+    {codigo:"clinica-03", numero:3, nome:"Clínica Vida Animal",         bairro:"Atalaia", responsavel_equipe:"Wendell"},
+    {codigo:"clinica-04", numero:4, nome:"Pet Center Sul",              bairro:"Farolândia", responsavel_equipe:"João"}
+  ];
+  const pontos = [
+    {codigo:"campus", nome:"Campus Jabotiana", bairro:"Jabotiana"},
+    {codigo:"feira-centro", nome:"Feira do Centro", bairro:"Centro"},
+    {codigo:"orla", nome:"Orla de Atalaia", bairro:"Atalaia"}
+  ];
+  const questoes = [
+    {canal:"rua", questao:"q1_ovos", ordem:1, tipo:"escolha", rotulo:"Ovos", correta:"b",
+     enunciado:"Você chegou em casa após comprar ovos. O que faria antes de guardá-los?"},
+    {canal:"rua", questao:"q2_carne", ordem:2, tipo:"escolha", rotulo:"Carne", correta:"c",
+     enunciado:"Você comprou carne para o almoço. Antes de temperá-la, o que faria?"},
+    {canal:"rua", questao:"q3_leite_uht", ordem:3, tipo:"escolha", rotulo:"Leite UHT", correta:"c",
+     enunciado:"“Não compro leite de caixinha porque tem conservantes.” O que você acha?"},
+    {canal:"rua", questao:"q4_queijo_coalho", ordem:4, tipo:"escolha", rotulo:"Queijo coalho", correta:"c",
+     enunciado:"Entre dois queijos coalho, um com furinhos e outro uniforme, qual escolheria?"},
+    {canal:"clinica", questao:"q1_escolha_racao", ordem:1, tipo:"escolha", rotulo:"Escolha da ração", correta:null,
+     enunciado:"Na hora de escolher a ração do seu pet, o que mais pesa na decisão?"},
+    {canal:"clinica", questao:"q2_medida_racao", ordem:2, tipo:"escolha", rotulo:"Porcionamento", correta:null,
+     enunciado:"Como você mede a quantidade de ração que oferece por dia?"},
+    {canal:"clinica", questao:"q3_complemento", ordem:3, tipo:"escolha", rotulo:"Complementos", correta:null,
+     enunciado:"Além da ração, o que seu pet costuma comer?"},
+    {canal:"clinica", questao:"q4_barreira", ordem:4, tipo:"escolha", rotulo:"Barreira", correta:null,
+     enunciado:"O que mais te atrapalha hoje a dar a melhor alimentação possível para ele?"},
+    {canal:"clinica", questao:"q5_duvida", ordem:5, tipo:"longo", rotulo:"Dúvida aberta", correta:null,
+     enunciado:"Se um veterinário pudesse responder uma dúvida sua agora, qual seria?"}
+  ];
+  const textos = {
+    q1_ovos:["Lavaria todos os ovos e depois os colocaria na geladeira",
+             "Guardaria sem lavar e higienizaria somente antes do uso",
+             "Deixaria os ovos fora da geladeira até o consumo","Não sei qual é a forma mais adequada"],
+    q2_carne:["Lavaria em água corrente","Lavaria com água e vinagre","Não lavaria a carne","Não sei o recomendado"],
+    q3_leite_uht:["É verdadeira: precisa de conservantes","É verdadeira para algumas marcas",
+                  "É falsa: a validade vem de um processo industrial","Não sei"],
+    q4_queijo_coalho:["O com furinhos, é mais artesanal","O sem furinhos, parece mais seguro",
+                      "Qualquer um: os furinhos não dizem nada","Não sei o que significa"],
+    q1_escolha_racao:["O preço","A indicação do veterinário","A indicação do petshop",
+                      "A marca que já conheço","O que vejo nas redes sociais"],
+    q2_medida_racao:["Uso a medida da embalagem","Peso a porção em balança","Encho o pote no olho",
+                     "Deixo à vontade o dia inteiro","Não sou eu quem cuida disso"],
+    q3_complemento:["Só ração","Ração e petiscos","Ração e comida da mesa","Alimentação natural","Ração e suplementos"],
+    q4_barreira:["O preço da ração boa","Não sei qual é a adequada","Ele é enjoado e recusa",
+                 "Falta de tempo","Nada, estou satisfeito"]
+  };
+  const opcoes = [];
+  questoes.filter(q => q.tipo === "escolha").forEach(q => {
+    textos[q.questao].forEach((t, i) => opcoes.push({
+      canal:q.canal, questao:q.questao, alternativa:"abcde"[i], ordem:i+1, rotulo:t
+    }));
+  });
+
+  const nomes = ["Ana","Bruno","Carla","Diego","Elaine","Fábio","Gabi","Heitor","Iara","João",
+                 "Kelly","Lucas","Marina","Nuno","Olívia","Paulo","Rita","Sérgio","Tati","Vitor"];
+  const duvidas = ["Posso dar osso para o meu cachorro?","Qual a quantidade certa de ração por dia?",
+    "Ração úmida faz mal?","Ele pode comer fruta?","Como sei se ele está acima do peso?",
+    "Posso misturar ração com comida caseira?","Qual a melhor ração para filhote?",
+    "Meu gato bebe pouca água, o que faço?","Petisco todo dia é ruim?","Preciso dar suplemento?"];
+  const sorteio = a => a[Math.floor(Math.random()*a.length)];
+  const viciado = (pesos) => {            // sorteio com pesos, para o demo não ficar uniforme
+    const t = pesos.reduce((x,y)=>x+y,0); let r = Math.random()*t;
+    for (let i=0;i<pesos.length;i++){ r -= pesos[i]; if (r <= 0) return "abcde"[i]; }
+    return "a";
+  };
+  const quando = d => new Date(Date.now() - Math.floor(Math.random()*d)*86400000
+                               - Math.floor(Math.random()*36000000)).toISOString();
+
+  const rua = [], clinica = [], eventos = [];
+  for (let i = 0; i < 128; i++){
+    const q = {q1_ovos:viciado([34,38,16,12]), q2_carne:viciado([46,18,26,10]),
+               q3_leite_uht:viciado([30,12,44,14]), q4_queijo_coalho:viciado([26,14,48,12])};
+    const ac = ["b","c","c","c"].filter((c,k) => q[["q1_ovos","q2_carne","q3_leite_uht","q4_queijo_coalho"][k]] === c).length;
+    rua.push({id:"r"+i, criado_em:quando(42), nome:sorteio(nomes)+" "+sorteio(["Silva","Souza","Lima","Costa","Rocha"]),
+      contato:`(79) 9${String(1000+i).slice(0,4)}-${String(1000+i*7).slice(0,4)}`,
+      aceita_dicas:Math.random()<.68, consentimento:true, ...q, acertos:ac,
+      ponto_codigo:sorteio(pontos).codigo, duracao_seg:60+Math.floor(Math.random()*110),
+      dispositivo:"mobile", status_crm:sorteio(["novo","novo","novo","contatado","respondeu"]), obs_crm:null});
+  }
+  for (let i = 0; i < 156; i++){
+    const tem = Math.random() < .66;
+    clinica.push({id:"c"+i, criado_em:quando(42), nome:sorteio(nomes)+" "+sorteio(["Alves","Matos","Freire","Dias","Nunes"]),
+      contato: tem ? `(79) 8${String(2000+i).slice(0,4)}-${String(3000+i*3).slice(0,4)}` : null,
+      aceita_dicas: tem ? Math.random()<.74 : null, consentimento:true,
+      q1_escolha_racao:viciado([22,26,20,26,6]), q2_medida_racao:viciado([30,12,28,24,6]),
+      q3_complemento:viciado([20,34,24,14,8]), q4_barreira:viciado([30,24,16,12,18]),
+      q5_duvida: Math.random()<.42 ? sorteio(duvidas) : null,
+      local_codigo:sorteio(locais).codigo, duracao_seg:70+Math.floor(Math.random()*130),
+      dispositivo:"mobile", status_crm:sorteio(["novo","novo","contatado","respondeu","nao_responde"]), obs_crm:null});
+  }
+  const etapas = [["abriu",0,1],["q1_ovos",1,.93],["contato",5,.81],["consentimento",8,.76],["concluiu",9,.72]];
+  ["rua","clinica"].forEach(canal => {
+    const base = canal === "rua" ? 178 : 214;
+    etapas.forEach(([etapa, ordem, taxa]) => {
+      for (let i = 0; i < Math.round(base*taxa); i++)
+        eventos.push({canal, sessao_id:canal+"-s"+i, etapa, ordem, ocorrido_em:quando(42)});
+    });
+  });
+  return {rua, clinica, eventos, locais, pontos, questoes, opcoes};
+}
+
+/* =========================================================================
+   INICIALIZAÇÃO
+   ========================================================================= */
+try{
+  const tema = localStorage.getItem("painel_tema");
+  if (tema) document.documentElement.setAttribute("data-tema", tema);
+}catch(x){}
+
+(function(){
+  const s = lerSessao();
+  if (s){ S.token = s.t; S.email = s.e; abrirPainel(); }
+})();
+</script>
+</body>
+</html>
